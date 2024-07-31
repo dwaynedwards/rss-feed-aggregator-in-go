@@ -9,5 +9,8 @@ func (c ContentType) String() string {
 	return c.value
 }
 
-// PlainText has the value of "text/plain"
-var PlainText = ContentType{"text/plain"}
+// ContentTypePlainText has the value of "text/plain"
+var (
+	ContentTypePlainText = ContentType{"text/plain"}
+	ContentTypeJSON      = ContentType{"application/json"}
+)
