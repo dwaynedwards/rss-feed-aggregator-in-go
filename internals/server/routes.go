@@ -1,60 +1,77 @@
 package server
 
 import (
+	"encoding/json"
 	"errors"
+	"io"
 	"net/http"
 
-	"github.com/dwaynedwards/rss-feed-aggregator-in-go/internals/data"
-	"github.com/dwaynedwards/rss-feed-aggregator-in-go/internals/util"
+	"github.com/dwaynedwards/rss-feed-aggregator-in-go/internals/account"
+	"github.com/dwaynedwards/rss-feed-aggregator-in-go/internals/common"
 )
 
-func (s *Server) routes() {
+func (s *server) routes() {
 	router := http.NewServeMux()
 
-	router.Handle("GET /healthz", s.handleHealthCheck())
-	router.Handle("POST /users", s.handleUserCreate())
+	router.Handle("GET /healthz", makeHttpHandlerFunc(s.handleHealthCheck()))
+	router.Handle("POST /accounts", makeHttpHandlerFunc(s.handleAccountCreate()))
 
 	s.Handler = router
 }
 
-// HealthCheckResponseMsg constant
 const HealthCheckResponseMsg = "Health check ok!"
 
-type inMemoryUserDB map[string]data.User
+func makeHttpHandlerFunc(a apiFunc) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		if err := a(w, r); err != nil {
+			var mr *common.MalformedRequestError
+			var a *account.AccountError
 
-var userDB = make(inMemoryUserDB)
-
-func (s *Server) handleHealthCheck() http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		s.respondWithText(w, r, HealthCheckResponseMsg, http.StatusOK)
-	})
+			if errors.As(err, &mr) {
+				http.Error(w, mr.Error(), mr.Status)
+			} else if errors.As(err, &a) {
+				http.Error(w, a.Error(), a.Status)
+			} else {
+				http.Error(w, err.Error(), http.StatusInternalServerError)
+			}
+		}
+	}
 }
 
-func (s *Server) handleUserCreate() http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		requestData, err := data.GetCreateUserRequestFromBody(w, r)
+func (s *server) handleHealthCheck() apiFunc {
+	return func(w http.ResponseWriter, r *http.Request) error {
+		respondWithText(w, http.StatusOK, HealthCheckResponseMsg)
+		return nil
+	}
+}
+
+func (s *server) handleAccountCreate() apiFunc {
+	return func(w http.ResponseWriter, r *http.Request) error {
+		defer io.Copy(io.Discard, r.Body)
+		defer r.Body.Close()
+
+		req, err := account.GetCreateAccountRequestFromBody(w, r)
 		if err != nil {
-			var mr util.MalformedRequest
-			if errors.As(err, &mr) {
-				http.Error(w, mr.Msg, mr.Status)
-			} else {
-				http.Error(w, err.Error(), http.StatusBadRequest)
-			}
-			return
+			return err
 		}
 
-		id := len(userDB) + 1
-		userData := data.GetUserFromCreateUserRequestWithID(requestData, id)
-
-		_, ok := userDB[userData.Email]
-		if ok {
-			http.Error(w, "User already exists", http.StatusConflict)
-			return
+		res, err := s.accountService.CreateAccount(req)
+		if err != nil {
+			return err
 		}
 
-		userDB[userData.Email] = userData
+		return respondWithJSON(w, http.StatusCreated, res)
+	}
+}
 
-		responseData := data.GetCreateUserResponseFromUser(userData)
-		s.respondWithJSON(w, r, responseData, http.StatusCreated)
-	})
+func respondWithText(w http.ResponseWriter, status int, data string) {
+	w.Header().Set("Content-Type", ContentTypePlainText.Value)
+	w.WriteHeader(status)
+	w.Write([]byte(data))
+}
+
+func respondWithJSON(w http.ResponseWriter, status int, data any) error {
+	w.Header().Set("Content-Type", ContentTypeJSON.Value)
+	w.WriteHeader(status)
+	return json.NewEncoder(w).Encode(data)
 }

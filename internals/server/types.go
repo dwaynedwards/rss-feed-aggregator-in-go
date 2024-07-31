@@ -1,15 +1,13 @@
 package server
 
-// ContentType is a struct that holds a valid value for the "Content-Type" header
+import "net/http"
+
 type ContentType struct {
-	value string
+	Value string
 }
 
-func (c ContentType) String() string {
-	return c.value
-}
+type apiFunc func(http.ResponseWriter, *http.Request) error
 
-// ContentTypePlainText has the value of "text/plain"
 var (
 	ContentTypePlainText = ContentType{"text/plain"}
 	ContentTypeJSON      = ContentType{"application/json"}

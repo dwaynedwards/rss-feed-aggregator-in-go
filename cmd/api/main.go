@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"os"
 
+	"github.com/dwaynedwards/rss-feed-aggregator-in-go/internals/account"
 	"github.com/dwaynedwards/rss-feed-aggregator-in-go/internals/server"
 	"github.com/google/go-cmp/cmp"
 	"github.com/joho/godotenv"
@@ -15,7 +16,9 @@ func main() {
 
 	portStr := getEnvVar("PORT")
 
-	server := server.NewServer()
+	accountStore := account.NewAccountStore()
+	accountService := account.NewAccountService(accountStore)
+	server := server.NewServer(accountService)
 
 	log.Printf("Starting listening at http://localhost:%s\n", portStr)
 	if err := http.ListenAndServe(":"+portStr, server); err != nil {

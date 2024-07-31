@@ -9,13 +9,15 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"github.com/dwaynedwards/rss-feed-aggregator-in-go/internals/data"
+	"github.com/dwaynedwards/rss-feed-aggregator-in-go/internals/account"
 	"github.com/dwaynedwards/rss-feed-aggregator-in-go/internals/server"
 	"github.com/google/go-cmp/cmp"
 )
 
 func TestServer_HealthCheck(t *testing.T) {
-	svr := server.NewServer()
+	accountStore := account.NewAccountStore()
+	accountService := account.NewAccountService(accountStore)
+	svr := server.NewServer(accountService)
 
 	t.Run("GET /healthz returns 200", func(t *testing.T) {
 		request, _ := http.NewRequest(http.MethodGet, "/healthz", nil)
@@ -31,17 +33,19 @@ func TestServer_HealthCheck(t *testing.T) {
 	})
 }
 
-func TestServer_User(t *testing.T) {
-	svr := server.NewServer()
+func TestServer_Account(t *testing.T) {
+	accountStore := account.NewAccountStore()
+	accountService := account.NewAccountService(accountStore)
+	svr := server.NewServer(accountService)
 
-	t.Run("POST /users creates a user and returns a user id and 201", func(t *testing.T) {
-		body := jsonBodyReaderFromStruct(data.CreateUserRequest{
+	t.Run("POST /accounts creates an account and returns an account id and 201", func(t *testing.T) {
+		body := jsonBodyReaderFromStruct(account.CreateAccountRequest{
 			Email:    "gopher@go.com",
 			Password: "password1",
 			Name:     "Gopher",
 		})
 
-		request, _ := http.NewRequest(http.MethodPost, "/users", body)
+		request, _ := http.NewRequest(http.MethodPost, "/accounts", body)
 		response := httptest.NewRecorder()
 
 		svr.ServeHTTP(response, request)
@@ -62,15 +66,15 @@ func TestServer_User(t *testing.T) {
 	}
 	badRequestCases := []BadRequestCase{
 		{Desc: "unknown field", Body: badRequest{email: "gopher@go.com", password: "password1", name: "Gopher", bad: "request"}},
-		{Desc: "missing email field", Body: data.CreateUserRequest{Name: "Gopher", Password: "password1"}},
-		{Desc: "missing name field", Body: data.CreateUserRequest{Email: "gopher@go.com", Password: "password1"}},
-		{Desc: "missing name password", Body: data.CreateUserRequest{Email: "gopher@go.com", Name: "Gopher"}},
+		{Desc: "missing email field", Body: account.CreateAccountRequest{Name: "Gopher", Password: "password1"}},
+		{Desc: "missing name field", Body: account.CreateAccountRequest{Email: "gopher@go.com", Password: "password1"}},
+		{Desc: "missing name password", Body: account.CreateAccountRequest{Email: "gopher@go.com", Name: "Gopher"}},
 		{Desc: "missing email, password and name field", Body: struct{}{}},
 	}
 
 	for _, test := range badRequestCases {
-		t.Run(fmt.Sprintf("POST /users tries to create a user with %s and returns 400", test.Desc), func(t *testing.T) {
-			request, _ := http.NewRequest(http.MethodPost, "/users", jsonBodyReaderFromStruct(test.Body))
+		t.Run(fmt.Sprintf("POST /accounts tries to create an account with %s and returns 400", test.Desc), func(t *testing.T) {
+			request, _ := http.NewRequest(http.MethodPost, "/accounts", jsonBodyReaderFromStruct(test.Body))
 			response := httptest.NewRecorder()
 
 			svr.ServeHTTP(response, request)
@@ -79,24 +83,30 @@ func TestServer_User(t *testing.T) {
 		})
 	}
 
-	t.Run("POST /users trys to create a user with an email that already exists returns 409", func(t *testing.T) {
-		body := jsonBodyReaderFromStruct(data.CreateUserRequest{
+	t.Run("POST /accounts trys to create an account with an email that already exists returns 409", func(t *testing.T) {
+		body1 := jsonBodyReaderFromStruct(account.CreateAccountRequest{
 			Email:    "gopher@go.com",
 			Password: "password1",
 			Name:     "Gopher",
 		})
 
-		request1, _ := http.NewRequest(http.MethodPost, "/users", body)
+		request1, _ := http.NewRequest(http.MethodPost, "/accounts", body1)
 		response1 := httptest.NewRecorder()
 
 		svr.ServeHTTP(response1, request1)
 
-		request2, _ := http.NewRequest(http.MethodPost, "/users", body)
+		body2 := jsonBodyReaderFromStruct(account.CreateAccountRequest{
+			Email:    "gopher@go.com",
+			Password: "password1",
+			Name:     "Gopher",
+		})
+
+		request2, _ := http.NewRequest(http.MethodPost, "/accounts", body2)
 		response2 := httptest.NewRecorder()
 
 		svr.ServeHTTP(response2, request2)
 
-		assertResponseStatusCode(t, response1.Code, http.StatusConflict)
+		assertResponseStatusCode(t, response2.Code, http.StatusConflict)
 	})
 }
 
