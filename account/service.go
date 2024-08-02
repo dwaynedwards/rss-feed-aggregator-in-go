@@ -5,6 +5,7 @@ import (
 
 	"github.com/alexedwards/argon2id"
 	"github.com/dwaynedwards/rss-feed-aggregator-in-go/common"
+	"github.com/google/uuid"
 )
 
 type service struct {
@@ -18,35 +19,37 @@ func NewService(store AccountStore) *service {
 }
 
 func (s *service) CreateAccount(req *CreateAccountRequest) (*CreateAccountResponse, error) {
-	password, err := argon2id.CreateHash(req.Password, argon2id.DefaultParams)
+	id, err := uuid.NewV6()
 	if err != nil {
 		return nil, &common.AccountError{Status: http.StatusInternalServerError, Msg: err.Error()}
 	}
 
-	account := &Account{
+	hashedPassword, err := argon2id.CreateHash(req.Password, argon2id.DefaultParams)
+	if err != nil {
+		return nil, &common.AccountError{Status: http.StatusInternalServerError, Msg: err.Error()}
+	}
+
+	accountToInsert := &Account{
+		ID:       id,
 		Email:    req.Email,
-		Password: password,
+		Password: hashedPassword,
 		Name:     req.Name,
 	}
 
-	if err := s.store.Create(account); err != nil {
-		return nil, err
+	if !s.store.Insert(accountToInsert) {
+		return nil, &common.AccountError{Status: http.StatusConflict, Msg: "account already exists"}
 	}
 
 	return &CreateAccountResponse{}, nil
 }
 
 func (s *service) SigninAccount(req *SigninAccountRequest) (*SigninAccountResponse, error) {
-	account := &Account{
-		Email: req.Email,
+	accountFound := s.store.GetByEmail(req.Email)
+	if accountFound == nil {
+		return nil, &common.AccountError{Status: http.StatusUnauthorized, Msg: "incorrect email or password provided"}
 	}
 
-	authenticatedAccount, err := s.store.Signin(account)
-	if err != nil {
-		return nil, err
-	}
-
-	match, err := argon2id.ComparePasswordAndHash(req.Password, authenticatedAccount.Password)
+	match, err := argon2id.ComparePasswordAndHash(req.Password, accountFound.Password)
 	if err != nil {
 		return nil, &common.AccountError{Status: http.StatusInternalServerError, Msg: err.Error()}
 	}
@@ -54,7 +57,5 @@ func (s *service) SigninAccount(req *SigninAccountRequest) (*SigninAccountRespon
 		return nil, &common.AccountError{Status: http.StatusUnauthorized, Msg: "incorrect email or password provided"}
 	}
 
-	return &SigninAccountResponse{
-		Token: authenticatedAccount.ID.String(),
-	}, nil
+	return &SigninAccountResponse{}, nil
 }

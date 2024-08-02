@@ -6,7 +6,7 @@ import (
 	"os"
 
 	"github.com/dwaynedwards/rss-feed-aggregator-in-go/account"
-	"github.com/dwaynedwards/rss-feed-aggregator-in-go/internals/server"
+	store "github.com/dwaynedwards/rss-feed-aggregator-in-go/internals/store/account"
 	"github.com/google/go-cmp/cmp"
 	"github.com/joho/godotenv"
 )
@@ -16,15 +16,33 @@ func main() {
 
 	portStr := getEnvVar("PORT")
 
-	accountStore := account.NewStore()
+	accountStore, err := store.NewMapAccountStore()
+	if err != nil {
+		log.Fatal(err)
+	}
+
 	accountService := account.NewService(accountStore)
 	accountServer := account.NewServer(accountService)
-	server := server.NewServer(accountServer)
+	server := makeNewServer(accountServer)
 
 	log.Printf("Starting listening at http://localhost:%s\n", portStr)
 	if err := http.ListenAndServe(":"+portStr, server); err != nil {
 		log.Fatalf("Could not listen at http://localhost:%s - %v", portStr, err)
 	}
+}
+
+type server struct {
+	http.Handler
+}
+
+func makeNewServer(accountServer account.AccountServer) *server {
+	s := new(server)
+
+	router := http.NewServeMux()
+	accountServer.RegisterEndpoints(router)
+	s.Handler = router
+
+	return s
 }
 
 func loadEnv() {
@@ -38,5 +56,6 @@ func getEnvVar(key string) string {
 	if cmp.Equal(variable, "") {
 		log.Fatalf("%s is not set in as an environment variable\n", key)
 	}
+
 	return variable
 }

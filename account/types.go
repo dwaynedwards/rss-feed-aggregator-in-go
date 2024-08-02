@@ -26,9 +26,7 @@ type SigninAccountRequest struct {
 	Password string `json:"password"`
 }
 
-type SigninAccountResponse struct {
-	Token string `json:"token"`
-}
+type SigninAccountResponse struct{}
 
 type AccountServer interface {
 	RegisterEndpoints(*http.ServeMux)
@@ -40,11 +38,10 @@ type AccountService interface {
 }
 
 type AccountStore interface {
-	Create(*Account) error
-	Signin(*Account) (*Account, error)
+	Insert(*Account) bool
+	GetByID(uuid.UUID) *Account
+	GetByEmail(string) *Account
 }
-
-type inMemoryAccountDB map[string]Account
 
 const (
 	ErrEmailRequired          = "email is a required field"
