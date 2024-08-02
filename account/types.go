@@ -1,7 +1,13 @@
 package account
 
+import (
+	"net/http"
+
+	"github.com/google/uuid"
+)
+
 type Account struct {
-	ID       int
+	ID       uuid.UUID
 	Email    string
 	Password string
 	Name     string
@@ -13,25 +19,29 @@ type CreateAccountRequest struct {
 	Name     string `json:"name"`
 }
 
-type CreateAccountResponse struct {
-	ID int `json:"id"`
+type CreateAccountResponse struct{}
+
+type SigninAccountRequest struct {
+	Email    string `json:"email"`
+	Password string `json:"password"`
 }
 
-type AccountError struct {
-	Status int
-	Msg    string
+type SigninAccountResponse struct {
+	Token string `json:"token"`
 }
 
-func (a AccountError) Error() string {
-	return a.Msg
+type AccountServer interface {
+	RegisterEndpoints(*http.ServeMux)
 }
 
 type AccountService interface {
 	CreateAccount(*CreateAccountRequest) (*CreateAccountResponse, error)
+	SigninAccount(*SigninAccountRequest) (*SigninAccountResponse, error)
 }
 
 type AccountStore interface {
 	Create(*Account) error
+	Signin(*Account) (*Account, error)
 }
 
 type inMemoryAccountDB map[string]Account

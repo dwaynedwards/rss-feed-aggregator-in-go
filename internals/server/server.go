@@ -3,20 +3,19 @@ package server
 import (
 	"net/http"
 
-	"github.com/dwaynedwards/rss-feed-aggregator-in-go/internals/account"
+	"github.com/dwaynedwards/rss-feed-aggregator-in-go/account"
 )
 
 type server struct {
 	http.Handler
-	accountService account.AccountService
 }
 
-func NewServer(accountService account.AccountService) *server {
+func NewServer(accountServer account.AccountServer) *server {
 	s := new(server)
 
-	s.accountService = accountService
-
-	s.routes()
+	router := http.NewServeMux()
+	accountServer.RegisterEndpoints(router)
+	s.Handler = router
 
 	return s
 }

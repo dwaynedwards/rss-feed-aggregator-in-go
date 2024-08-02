@@ -9,6 +9,45 @@ import (
 	"strings"
 )
 
+func MakeHTTPHandlerFunc(a APIFunc) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		defer closeBody(r)
+
+		if err := a(w, r); err != nil {
+			var mr *MalformedRequestError
+			var a *AccountError
+
+			if errors.As(err, &mr) {
+				http.Error(w, mr.Error(), mr.Status)
+			} else if errors.As(err, &a) {
+				http.Error(w, a.Error(), a.Status)
+			} else {
+				http.Error(w, err.Error(), http.StatusInternalServerError)
+			}
+		}
+	}
+}
+
+func closeBody(r *http.Request) {
+	if r.Body == nil {
+		return
+	}
+	io.Copy(io.Discard, r.Body)
+	r.Body.Close()
+}
+
+func RespondWithText(w http.ResponseWriter, status int, data string) {
+	w.Header().Set("Content-Type", ContentTypePlainText.Value)
+	w.WriteHeader(status)
+	w.Write([]byte(data))
+}
+
+func RespondWithJSON(w http.ResponseWriter, status int, data any) error {
+	w.Header().Set("Content-Type", ContentTypeJSON.Value)
+	w.WriteHeader(status)
+	return json.NewEncoder(w).Encode(data)
+}
+
 // Source from: https://www.alexedwards.net/blog/how-to-properly-parse-a-json-request-body
 
 type MalformedRequestError struct {
