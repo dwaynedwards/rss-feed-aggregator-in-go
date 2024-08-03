@@ -6,7 +6,7 @@ import (
 	"os"
 
 	"github.com/dwaynedwards/rss-feed-aggregator-in-go/account"
-	store "github.com/dwaynedwards/rss-feed-aggregator-in-go/internals/store/account"
+	"github.com/dwaynedwards/rss-feed-aggregator-in-go/account/store"
 	"github.com/google/go-cmp/cmp"
 	"github.com/joho/godotenv"
 )

@@ -10,6 +10,8 @@ type server struct {
 	service AccountService
 }
 
+const HealthCheckResponseMsg = "Health check ok!"
+
 func NewServer(service AccountService) *server {
 	s := new(server)
 
@@ -31,7 +33,7 @@ func (s *server) makeV1Router(r *http.ServeMux) {
 
 func (s *server) handleHealthCheck() common.APIFunc {
 	return func(w http.ResponseWriter, r *http.Request) error {
-		common.RespondWithText(w, http.StatusOK, common.HealthCheckResponseMsg)
+		common.WriteJSON(w, http.StatusOK, map[string]string{"msg": HealthCheckResponseMsg})
 		return nil
 	}
 }
@@ -48,7 +50,7 @@ func (s *server) handleAccountCreate() common.APIFunc {
 			return err
 		}
 
-		return common.RespondWithJSON(w, http.StatusCreated, res)
+		return common.WriteJSON(w, http.StatusCreated, res)
 	}
 }
 
@@ -64,6 +66,6 @@ func (s *server) handleAccountSignin() common.APIFunc {
 			return err
 		}
 
-		return common.RespondWithJSON(w, http.StatusOK, res)
+		return common.WriteJSON(w, http.StatusOK, res)
 	}
 }

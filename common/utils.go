@@ -5,25 +5,23 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"log/slog"
 	"net/http"
 	"strings"
 )
 
-func MakeHTTPHandlerFunc(a APIFunc) http.HandlerFunc {
+func MakeHTTPHandlerFunc(h APIFunc) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		defer closeBody(r)
 
-		if err := a(w, r); err != nil {
-			var mr *MalformedRequestError
-			var a *AccountError
-
-			if errors.As(err, &mr) {
-				http.Error(w, mr.Error(), mr.Status)
-			} else if errors.As(err, &a) {
-				http.Error(w, a.Error(), a.Status)
+		if err := h(w, r); err != nil {
+			if apiError, ok := err.(APIError); ok {
+				WriteJSON(w, apiError.StatusCode, apiError)
 			} else {
-				http.Error(w, err.Error(), http.StatusInternalServerError)
+				errRes := NewAPIError(http.StatusInternalServerError, fmt.Errorf("internal server error"))
+				WriteJSON(w, errRes.StatusCode, errRes)
 			}
+			slog.Error("HTTP API error", "err", err.Error(), "path", r.URL.Path)
 		}
 	}
 }
@@ -36,84 +34,70 @@ func closeBody(r *http.Request) {
 	r.Body.Close()
 }
 
-func RespondWithText(w http.ResponseWriter, status int, data string) {
-	w.Header().Set("Content-Type", ContentTypePlainText.Value)
-	w.WriteHeader(status)
-	w.Write([]byte(data))
-}
-
-func RespondWithJSON(w http.ResponseWriter, status int, data any) error {
-	w.Header().Set("Content-Type", ContentTypeJSON.Value)
+func WriteJSON(w http.ResponseWriter, status int, data any) error {
+	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(status)
 	return json.NewEncoder(w).Encode(data)
 }
 
-// Source from: https://www.alexedwards.net/blog/how-to-properly-parse-a-json-request-body
-
-type MalformedRequestError struct {
-	Status int
-	Msg    string
+func DecodeJSON(w http.ResponseWriter, r *http.Request, dst any) error {
+	return decodeJSON(w, r, dst, false)
 }
 
-func (mr MalformedRequestError) Error() string {
-	return mr.Msg
+func DecodeJSONStrict(w http.ResponseWriter, r *http.Request, dst any) error {
+	return decodeJSON(w, r, dst, true)
 }
 
-func DecodeJSONBody(w http.ResponseWriter, r *http.Request, dst interface{}) error {
-	ct := r.Header.Get("Content-Type")
-	if ct != "" {
-		mediaType := strings.ToLower(strings.TrimSpace(strings.Split(ct, ";")[0]))
-		if mediaType != "application/json" {
-			msg := "Content-Type header is not application/json"
-			return &MalformedRequestError{Status: http.StatusUnsupportedMediaType, Msg: msg}
-		}
-	}
-
-	r.Body = http.MaxBytesReader(w, r.Body, 1048576)
+func decodeJSON(w http.ResponseWriter, r *http.Request, dst any, disallowUnknownFields bool) error {
+	maxBytes := 1_048_576
+	r.Body = http.MaxBytesReader(w, r.Body, int64(maxBytes))
 
 	dec := json.NewDecoder(r.Body)
-	dec.DisallowUnknownFields()
 
-	err := dec.Decode(&dst)
+	if disallowUnknownFields {
+		dec.DisallowUnknownFields()
+	}
+
+	err := dec.Decode(dst)
 	if err != nil {
 		var syntaxError *json.SyntaxError
 		var unmarshalTypeError *json.UnmarshalTypeError
+		var invalidUnmarshalError *json.InvalidUnmarshalError
 
 		switch {
 		case errors.As(err, &syntaxError):
-			msg := fmt.Sprintf("Request body contains badly-formed JSON (at position %d)", syntaxError.Offset)
-			return &MalformedRequestError{Status: http.StatusBadRequest, Msg: msg}
+			return fmt.Errorf("body contains badly-formed JSON (at character %d)", syntaxError.Offset)
 
 		case errors.Is(err, io.ErrUnexpectedEOF):
-			msg := "Request body contains badly-formed JSON"
-			return &MalformedRequestError{Status: http.StatusBadRequest, Msg: msg}
+			return errors.New("body contains badly-formed JSON")
 
 		case errors.As(err, &unmarshalTypeError):
-			msg := fmt.Sprintf("Request body contains an invalid value for the %q field (at position %d)", unmarshalTypeError.Field, unmarshalTypeError.Offset)
-			return &MalformedRequestError{Status: http.StatusBadRequest, Msg: msg}
+			if unmarshalTypeError.Field != "" {
+				return fmt.Errorf("body contains incorrect JSON type for field %q", unmarshalTypeError.Field)
+			}
+			return fmt.Errorf("body contains incorrect JSON type (at character %d)", unmarshalTypeError.Offset)
+
+		case errors.Is(err, io.EOF):
+			return errors.New("body must not be empty")
 
 		case strings.HasPrefix(err.Error(), "json: unknown field "):
 			fieldName := strings.TrimPrefix(err.Error(), "json: unknown field ")
-			msg := fmt.Sprintf("Request body contains unknown field %s", fieldName)
-			return &MalformedRequestError{Status: http.StatusBadRequest, Msg: msg}
-
-		case errors.Is(err, io.EOF):
-			msg := "Request body must not be empty"
-			return &MalformedRequestError{Status: http.StatusBadRequest, Msg: msg}
+			return fmt.Errorf("body contains unknown key %s", fieldName)
 
 		case err.Error() == "http: request body too large":
-			msg := "Request body must not be larger than 1MB"
-			return &MalformedRequestError{Status: http.StatusRequestEntityTooLarge, Msg: msg}
+			return fmt.Errorf("body must not be larger than %d bytes", maxBytes)
+
+		case errors.As(err, &invalidUnmarshalError):
+			panic(err)
 
 		default:
-			return &MalformedRequestError{Status: http.StatusBadRequest, Msg: err.Error()}
+			return err
 		}
 	}
 
 	err = dec.Decode(&struct{}{})
 	if !errors.Is(err, io.EOF) {
-		msg := "Request body must only contain a single JSON object"
-		return &MalformedRequestError{Status: http.StatusBadRequest, Msg: msg}
+		return errors.New("body must only contain a single JSON value")
 	}
 
 	return nil

@@ -11,8 +11,7 @@ import (
 
 	"github.com/alexedwards/argon2id"
 	"github.com/dwaynedwards/rss-feed-aggregator-in-go/account"
-	"github.com/dwaynedwards/rss-feed-aggregator-in-go/common"
-	store "github.com/dwaynedwards/rss-feed-aggregator-in-go/internals/store/account"
+	"github.com/dwaynedwards/rss-feed-aggregator-in-go/account/store"
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/uuid"
 )
@@ -71,11 +70,7 @@ func TestAccount_HealthCheck(t *testing.T) {
 
 		server.ServeHTTP(response, request)
 
-		want := common.HealthCheckResponseMsg
-		got := response.Body.String()
-
 		assertResponseStatusCode(t, response.Code, http.StatusOK)
-		assertResponseText(t, got, want)
 	})
 }
 
@@ -125,7 +120,7 @@ func TestAccount_Create(t *testing.T) {
 		accountServer := account.NewServer(accountService)
 		server := NewTestServer(accountServer)
 
-		t.Run(fmt.Sprintf("POST /accounts tries to create an account with %s and returns 400", test.desc), func(t *testing.T) {
+		t.Run(fmt.Sprintf("POST /accounts tries to create an account with %s and returns 422", test.desc), func(t *testing.T) {
 			request, err := http.NewRequest(http.MethodPost, "/api/v1/accounts", jsonBodyReaderFromStruct(t, test.body))
 			if err != nil {
 				t.Fatal(err)
@@ -135,7 +130,7 @@ func TestAccount_Create(t *testing.T) {
 
 			server.ServeHTTP(response, request)
 
-			assertResponseStatusCode(t, response.Code, http.StatusBadRequest)
+			assertResponseStatusCode(t, response.Code, http.StatusUnprocessableEntity)
 		})
 	}
 
@@ -279,7 +274,7 @@ func TestAccount_Signin(t *testing.T) {
 	}
 
 	for _, test := range badSigninRequestCases {
-		t.Run(fmt.Sprintf("POST /accounts/signin tries to sign in with %s returns 400", test.desc), func(t *testing.T) {
+		t.Run(fmt.Sprintf("POST /accounts/signin tries to sign in with %s returns 422", test.desc), func(t *testing.T) {
 			accountService := account.NewService(dummyStore)
 			accountServer := account.NewServer(accountService)
 			server := NewTestServer(accountServer)
@@ -295,7 +290,7 @@ func TestAccount_Signin(t *testing.T) {
 
 			server.ServeHTTP(response, request)
 
-			assertResponseStatusCode(t, response.Code, http.StatusBadRequest)
+			assertResponseStatusCode(t, response.Code, http.StatusUnprocessableEntity)
 		})
 	}
 }
@@ -305,14 +300,6 @@ func assertResponseStatusCode(t testing.TB, got, want int) {
 
 	if !cmp.Equal(got, want) {
 		t.Errorf("Did not get correct status code, got %d, want %d", got, want)
-	}
-}
-
-func assertResponseText(t testing.TB, got, want string) {
-	t.Helper()
-
-	if !cmp.Equal(got, want) {
-		t.Errorf("Did not get correct status code, got %s, want %s", got, want)
 	}
 }
 

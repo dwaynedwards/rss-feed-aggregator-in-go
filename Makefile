@@ -3,15 +3,15 @@ MAIN_PACKAGE_PATH := ./cmd/api
 PROJECT_NAME := rss-feed-aggregator
 BINARY_NAME := rss-feed
 
-## build: build the application
-.PHONY: build
-build:
-	@go build -o=/tmp/${PROJECT_NAME}/bin/${BINARY_NAME} ${MAIN_PACKAGE_PATH}
+## build: build the account api
+.PHONY: build/account
+build/account:
+	@go build -o=/tmp/${PROJECT_NAME}/bin/${BINARY_NAME}-account-api ${MAIN_PACKAGE_PATH}/account
 
-## run: run the  application
-.PHONY: run
-run: build
-	@/tmp/${PROJECT_NAME}/bin/${BINARY_NAME}
+## run: run the account api
+.PHONY: run/account
+run/account: build/account
+	@/tmp/${PROJECT_NAME}/bin/${BINARY_NAME}-account-api
 
 
 ## tidy: format code and tidy modfile

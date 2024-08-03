@@ -1,9 +1,7 @@
 package account
 
 import (
-	"fmt"
 	"net/http"
-	"strings"
 
 	"github.com/dwaynedwards/rss-feed-aggregator-in-go/common"
 )
@@ -11,8 +9,8 @@ import (
 func getCreateRequestFromBody(w http.ResponseWriter, r *http.Request) (*CreateAccountRequest, error) {
 	var requestData *CreateAccountRequest
 
-	if err := common.DecodeJSONBody(w, r, &requestData); err != nil {
-		return nil, err
+	if err := common.DecodeJSONStrict(w, r, &requestData); err != nil {
+		return nil, common.InvalidJSON(err)
 	}
 
 	if err := validateCreateRequest(requestData); err != nil {
@@ -23,23 +21,22 @@ func getCreateRequestFromBody(w http.ResponseWriter, r *http.Request) (*CreateAc
 }
 
 func validateCreateRequest(req *CreateAccountRequest) error {
-	var errs []string
+	errs := map[string]string{}
 
 	if req.Email == "" {
-		errs = append(errs, ErrEmailRequired)
+		errs["email"] = ErrEmailRequired
 	}
 
 	if req.Password == "" {
-		errs = append(errs, ErrPasswordRequired)
+		errs["password"] = ErrPasswordRequired
 	}
 
 	if req.Name == "" {
-		errs = append(errs, ErrNameRequired)
+		errs["name"] = ErrNameRequired
 	}
 
 	if len(errs) > 0 {
-		msg := fmt.Sprintf(ErrUnableToProcessRequest, strings.Join(errs, ", "))
-		return &common.AccountError{Status: http.StatusBadRequest, Msg: msg}
+		return common.InvalidRequestData(errs)
 	}
 
 	return nil
@@ -48,8 +45,8 @@ func validateCreateRequest(req *CreateAccountRequest) error {
 func getSigninRequestFromBody(w http.ResponseWriter, r *http.Request) (*SigninAccountRequest, error) {
 	var requestData *SigninAccountRequest
 
-	if err := common.DecodeJSONBody(w, r, &requestData); err != nil {
-		return nil, err
+	if err := common.DecodeJSONStrict(w, r, &requestData); err != nil {
+		return nil, common.InvalidJSON(err)
 	}
 
 	if err := validateSigninRequest(requestData); err != nil {
@@ -60,19 +57,18 @@ func getSigninRequestFromBody(w http.ResponseWriter, r *http.Request) (*SigninAc
 }
 
 func validateSigninRequest(req *SigninAccountRequest) error {
-	var errs []string
+	errs := map[string]string{}
 
 	if req.Email == "" {
-		errs = append(errs, ErrEmailRequired)
+		errs["email"] = ErrEmailRequired
 	}
 
 	if req.Password == "" {
-		errs = append(errs, ErrPasswordRequired)
+		errs["password"] = ErrPasswordRequired
 	}
 
 	if len(errs) > 0 {
-		msg := fmt.Sprintf(ErrUnableToProcessRequest, strings.Join(errs, ", "))
-		return &common.AccountError{Status: http.StatusBadRequest, Msg: msg}
+		return common.InvalidRequestData(errs)
 	}
 
 	return nil

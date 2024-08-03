@@ -44,8 +44,7 @@ type AccountStore interface {
 }
 
 const (
-	ErrEmailRequired          = "email is a required field"
-	ErrPasswordRequired       = "password is a required field"
-	ErrNameRequired           = "name is a required field"
-	ErrUnableToProcessRequest = "unable to process request body: %s"
+	ErrEmailRequired    = "email is a required field"
+	ErrPasswordRequired = "password is a required field"
+	ErrNameRequired     = "name is a required field"
 )

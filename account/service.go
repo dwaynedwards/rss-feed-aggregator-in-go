@@ -1,8 +1,6 @@
 package account
 
 import (
-	"net/http"
-
 	"github.com/alexedwards/argon2id"
 	"github.com/dwaynedwards/rss-feed-aggregator-in-go/common"
 	"github.com/google/uuid"
@@ -21,12 +19,12 @@ func NewService(store AccountStore) *service {
 func (s *service) CreateAccount(req *CreateAccountRequest) (*CreateAccountResponse, error) {
 	id, err := uuid.NewV6()
 	if err != nil {
-		return nil, &common.AccountError{Status: http.StatusInternalServerError, Msg: err.Error()}
+		return nil, err
 	}
 
 	hashedPassword, err := argon2id.CreateHash(req.Password, argon2id.DefaultParams)
 	if err != nil {
-		return nil, &common.AccountError{Status: http.StatusInternalServerError, Msg: err.Error()}
+		return nil, err
 	}
 
 	accountToInsert := &Account{
@@ -37,7 +35,11 @@ func (s *service) CreateAccount(req *CreateAccountRequest) (*CreateAccountRespon
 	}
 
 	if !s.store.Insert(accountToInsert) {
-		return nil, &common.AccountError{Status: http.StatusConflict, Msg: "account already exists"}
+		// InvalidAccountExists mornally this workflow would be handled with a status 201 and a message saying an email was sent to
+		// verify the account. When this error is hit, an email would be sent saying if you're trying to create
+		// an you can trying executing the forgot password workflow instead of leaking internal info to the user
+		// that an account already exists with the email provided, but this is outside of the scope of this project
+		return nil, common.InvalidAccountExists()
 	}
 
 	return &CreateAccountResponse{}, nil
@@ -46,15 +48,15 @@ func (s *service) CreateAccount(req *CreateAccountRequest) (*CreateAccountRespon
 func (s *service) SigninAccount(req *SigninAccountRequest) (*SigninAccountResponse, error) {
 	accountFound := s.store.GetByEmail(req.Email)
 	if accountFound == nil {
-		return nil, &common.AccountError{Status: http.StatusUnauthorized, Msg: "incorrect email or password provided"}
+		return nil, common.InvalidCredentials()
 	}
 
 	match, err := argon2id.ComparePasswordAndHash(req.Password, accountFound.Password)
 	if err != nil {
-		return nil, &common.AccountError{Status: http.StatusInternalServerError, Msg: err.Error()}
+		return nil, err
 	}
 	if !match {
-		return nil, &common.AccountError{Status: http.StatusUnauthorized, Msg: "incorrect email or password provided"}
+		return nil, common.InvalidCredentials()
 	}
 
 	return &SigninAccountResponse{}, nil
