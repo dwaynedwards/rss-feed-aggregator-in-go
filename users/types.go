@@ -1,4 +1,4 @@
-package account
+package users
 
 import (
 	"net/http"
@@ -6,41 +6,41 @@ import (
 	"github.com/google/uuid"
 )
 
-type Account struct {
+type User struct {
 	ID       uuid.UUID
 	Email    string
 	Password string
 	Name     string
 }
 
-type CreateAccountRequest struct {
+type SignUpUserRequest struct {
 	Email    string `json:"email"`
 	Password string `json:"password"`
 	Name     string `json:"name"`
 }
 
-type CreateAccountResponse struct{}
+type SignUpUserResponse struct{}
 
-type SigninAccountRequest struct {
+type SignInUserRequest struct {
 	Email    string `json:"email"`
 	Password string `json:"password"`
 }
 
-type SigninAccountResponse struct{}
+type SignInUserResponse struct{}
 
-type AccountServer interface {
+type UsersServer interface {
 	RegisterEndpoints(*http.ServeMux)
 }
 
-type AccountService interface {
-	CreateAccount(*CreateAccountRequest) (*CreateAccountResponse, error)
-	SigninAccount(*SigninAccountRequest) (*SigninAccountResponse, error)
+type UsersService interface {
+	SignUpUser(*SignUpUserRequest) (*SignUpUserResponse, error)
+	SignInUser(*SignInUserRequest) (*SignInUserResponse, error)
 }
 
-type AccountStore interface {
-	Insert(*Account) bool
-	GetByID(uuid.UUID) *Account
-	GetByEmail(string) *Account
+type UsersStore interface {
+	InsertUser(*User) bool
+	GetUserByID(uuid.UUID) *User
+	GetUserByEmail(string) *User
 }
 
 const (

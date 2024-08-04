@@ -5,8 +5,8 @@ import (
 	"net/http"
 	"os"
 
-	"github.com/dwaynedwards/rss-feed-aggregator-in-go/account"
-	"github.com/dwaynedwards/rss-feed-aggregator-in-go/account/store"
+	"github.com/dwaynedwards/rss-feed-aggregator-in-go/users"
+	"github.com/dwaynedwards/rss-feed-aggregator-in-go/users/store"
 	"github.com/google/go-cmp/cmp"
 	"github.com/joho/godotenv"
 )
@@ -16,14 +16,14 @@ func main() {
 
 	portStr := getEnvVar("PORT")
 
-	accountStore, err := store.NewMapAccountStore()
+	usersStore, err := store.NewMapUserStore()
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	accountService := account.NewService(accountStore)
-	accountServer := account.NewServer(accountService)
-	server := makeNewServer(accountServer)
+	usersService := users.NewService(usersStore)
+	usersServer := users.NewServer(usersService)
+	server := makeNewServer(usersServer)
 
 	log.Printf("Starting listening at http://localhost:%s\n", portStr)
 	if err := http.ListenAndServe(":"+portStr, server); err != nil {
@@ -35,11 +35,11 @@ type server struct {
 	http.Handler
 }
 
-func makeNewServer(accountServer account.AccountServer) *server {
+func makeNewServer(usersServer users.UsersServer) *server {
 	s := new(server)
 
 	router := http.NewServeMux()
-	accountServer.RegisterEndpoints(router)
+	usersServer.RegisterEndpoints(router)
 	s.Handler = router
 
 	return s

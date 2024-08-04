@@ -1,4 +1,4 @@
-package account
+package users
 
 import (
 	"net/http"
@@ -6,8 +6,8 @@ import (
 	"github.com/dwaynedwards/rss-feed-aggregator-in-go/common"
 )
 
-func getCreateRequestFromBody(w http.ResponseWriter, r *http.Request) (*CreateAccountRequest, error) {
-	var requestData *CreateAccountRequest
+func getCreateRequestFromBody(w http.ResponseWriter, r *http.Request) (*SignUpUserRequest, error) {
+	var requestData *SignUpUserRequest
 
 	if err := common.DecodeJSONStrict(w, r, &requestData); err != nil {
 		return nil, common.InvalidJSON(err)
@@ -20,7 +20,7 @@ func getCreateRequestFromBody(w http.ResponseWriter, r *http.Request) (*CreateAc
 	return requestData, nil
 }
 
-func validateCreateRequest(req *CreateAccountRequest) error {
+func validateCreateRequest(req *SignUpUserRequest) error {
 	errs := map[string]string{}
 
 	if req.Email == "" {
@@ -42,8 +42,8 @@ func validateCreateRequest(req *CreateAccountRequest) error {
 	return nil
 }
 
-func getSigninRequestFromBody(w http.ResponseWriter, r *http.Request) (*SigninAccountRequest, error) {
-	var requestData *SigninAccountRequest
+func getSigninRequestFromBody(w http.ResponseWriter, r *http.Request) (*SignInUserRequest, error) {
+	var requestData *SignInUserRequest
 
 	if err := common.DecodeJSONStrict(w, r, &requestData); err != nil {
 		return nil, common.InvalidJSON(err)
@@ -56,7 +56,7 @@ func getSigninRequestFromBody(w http.ResponseWriter, r *http.Request) (*SigninAc
 	return requestData, nil
 }
 
-func validateSigninRequest(req *SigninAccountRequest) error {
+func validateSigninRequest(req *SignInUserRequest) error {
 	errs := map[string]string{}
 
 	if req.Email == "" {

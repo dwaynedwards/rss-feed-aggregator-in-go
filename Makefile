@@ -3,16 +3,15 @@ MAIN_PACKAGE_PATH := ./cmd/api
 PROJECT_NAME := rss-feed-aggregator
 BINARY_NAME := rss-feed
 
-## build: build the account api
-.PHONY: build/account
-build/account:
-	@go build -o=/tmp/${PROJECT_NAME}/bin/${BINARY_NAME}-account-api ${MAIN_PACKAGE_PATH}/account
+## build: build the users api
+.PHONY: build-users
+build-users:
+	@go build -o=/tmp/${PROJECT_NAME}/bin/${BINARY_NAME}-users-api ${MAIN_PACKAGE_PATH}/users
 
-## run: run the account api
-.PHONY: run/account
-run/account: build/account
-	@/tmp/${PROJECT_NAME}/bin/${BINARY_NAME}-account-api
-
+## run: run the users api
+.PHONY: run-users
+run-users: build-users
+	@/tmp/${PROJECT_NAME}/bin/${BINARY_NAME}-users-api
 
 ## tidy: format code and tidy modfile
 .PHONY: tidy
@@ -27,15 +26,15 @@ audit:
 	@go vet ./...
 	@go run honnef.co/go/tools/cmd/staticcheck@latest -checks=all,-ST1000,-U1000 ./...
 	@go run golang.org/x/vuln/cmd/govulncheck@latest ./...
-	@go test -race -buildvcs -vet=off ./...
+	@go test -race -buildvcs -vet=off ./tests/...
 
 ## test: run all tests
 .PHONY: test
 test:
-	@go test -v -race -buildvcs ./...
+	@go test -v -race -buildvcs ./tests/...
 
-## test/cover: run all tests and display coverage
-.PHONY: test/cover
-test/cover:
-	@go test -v -race -buildvcs -coverprofile=/tmp/coverage.out ./...
+## test-cover: run all tests and display coverage
+.PHONY: test-cover
+test-cover:
+	@go test -v -race -buildvcs -coverprofile=/tmp/coverage.out ./tests/...
 	@go tool cover -html=/tmp/coverage.out

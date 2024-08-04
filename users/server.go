@@ -1,4 +1,4 @@
-package account
+package users
 
 import (
 	"net/http"
@@ -7,12 +7,10 @@ import (
 )
 
 type server struct {
-	service AccountService
+	service UsersService
 }
 
-const HealthCheckResponseMsg = "Health check ok!"
-
-func NewServer(service AccountService) *server {
+func NewServer(service UsersService) *server {
 	s := new(server)
 
 	s.service = service
@@ -25,27 +23,27 @@ func (s *server) RegisterEndpoints(r *http.ServeMux) {
 }
 
 func (s *server) makeV1Router(r *http.ServeMux) {
-	r.Handle("GET /api/v1/accounts/healthz", common.MakeHTTPHandlerFunc(s.handleHealthCheck()))
+	r.Handle("GET /api/v1/users/status", common.MakeHTTPHandlerFunc(s.handleStatusCheck()))
 
-	r.Handle("POST /api/v1/accounts", common.MakeHTTPHandlerFunc(s.handleAccountCreate()))
-	r.Handle("POST /api/v1/accounts/signin", common.MakeHTTPHandlerFunc(s.handleAccountSignin()))
+	r.Handle("POST /api/v1/users/signup", common.MakeHTTPHandlerFunc(s.handleUserSignUp()))
+	r.Handle("POST /api/v1/users/signin", common.MakeHTTPHandlerFunc(s.handleUserSignIn()))
 }
 
-func (s *server) handleHealthCheck() common.APIFunc {
+func (s *server) handleStatusCheck() common.APIFunc {
 	return func(w http.ResponseWriter, r *http.Request) error {
-		common.WriteJSON(w, http.StatusOK, map[string]string{"msg": HealthCheckResponseMsg})
+		common.WriteJSON(w, http.StatusOK, map[string]string{"msg": "Health check ok!"})
 		return nil
 	}
 }
 
-func (s *server) handleAccountCreate() common.APIFunc {
+func (s *server) handleUserSignUp() common.APIFunc {
 	return func(w http.ResponseWriter, r *http.Request) error {
 		req, err := getCreateRequestFromBody(w, r)
 		if err != nil {
 			return err
 		}
 
-		res, err := s.service.CreateAccount(req)
+		res, err := s.service.SignUpUser(req)
 		if err != nil {
 			return err
 		}
@@ -54,14 +52,14 @@ func (s *server) handleAccountCreate() common.APIFunc {
 	}
 }
 
-func (s *server) handleAccountSignin() common.APIFunc {
+func (s *server) handleUserSignIn() common.APIFunc {
 	return func(w http.ResponseWriter, r *http.Request) error {
 		req, err := getSigninRequestFromBody(w, r)
 		if err != nil {
 			return err
 		}
 
-		res, err := s.service.SigninAccount(req)
+		res, err := s.service.SignInUser(req)
 		if err != nil {
 			return err
 		}
