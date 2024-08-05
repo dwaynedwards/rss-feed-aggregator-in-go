@@ -2,12 +2,10 @@ package users
 
 import (
 	"net/http"
-
-	"github.com/google/uuid"
 )
 
 type User struct {
-	ID       uuid.UUID
+	ID       int64
 	Email    string
 	Password string
 	Name     string
@@ -38,9 +36,9 @@ type UsersService interface {
 }
 
 type UsersStore interface {
-	InsertUser(*User) bool
-	GetUserByID(uuid.UUID) *User
-	GetUserByEmail(string) *User
+	InsertUser(*User) error
+	GetUserByID(int64) (*User, error)
+	GetUserByEmail(string) (*User, error)
 }
 
 const (

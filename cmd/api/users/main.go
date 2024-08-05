@@ -3,23 +3,20 @@ package main
 import (
 	"log"
 	"net/http"
-	"os"
 
+	"github.com/dwaynedwards/rss-feed-aggregator-in-go/common"
 	"github.com/dwaynedwards/rss-feed-aggregator-in-go/users"
 	"github.com/dwaynedwards/rss-feed-aggregator-in-go/users/store"
-	"github.com/google/go-cmp/cmp"
-	"github.com/joho/godotenv"
 )
 
 func main() {
-	loadEnv()
+	portStr := common.GetEnvVar("PORT")
 
-	portStr := getEnvVar("PORT")
-
-	usersStore, err := store.NewMapUserStore()
+	usersStore, cleanup, err := store.NewPostgresUsersStore()
 	if err != nil {
 		log.Fatal(err)
 	}
+	defer cleanup()
 
 	usersService := users.NewService(usersStore)
 	usersServer := users.NewServer(usersService)
@@ -43,19 +40,4 @@ func makeNewServer(usersServer users.UsersServer) *server {
 	s.Handler = router
 
 	return s
-}
-
-func loadEnv() {
-	if err := godotenv.Load(".env"); err != nil {
-		log.Fatalf("Failed to load env file: %s\n", err.Error())
-	}
-}
-
-func getEnvVar(key string) string {
-	variable := os.Getenv(key)
-	if cmp.Equal(variable, "") {
-		log.Fatalf("%s is not set in as an environment variable\n", key)
-	}
-
-	return variable
 }

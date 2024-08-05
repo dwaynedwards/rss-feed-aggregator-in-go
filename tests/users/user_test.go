@@ -10,7 +10,6 @@ import (
 
 	"github.com/dwaynedwards/rss-feed-aggregator-in-go/users"
 	"github.com/dwaynedwards/rss-feed-aggregator-in-go/users/store"
-	"github.com/google/uuid"
 )
 
 func TestUsersHealthCheck(t *testing.T) {
@@ -102,7 +101,7 @@ func TestUsersSignUp(t *testing.T) {
 			t.Fatal(err)
 		}
 
-		initialDB := map[uuid.UUID]*users.User{
+		initialDB := store.MapUsersDB{
 			user.ID: user,
 		}
 
@@ -138,7 +137,7 @@ func TestUsersSignin(t *testing.T) {
 			t.Fatal(err)
 		}
 
-		initialDB := map[uuid.UUID]*users.User{
+		initialDB := store.MapUsersDB{
 			user.ID: user,
 		}
 
@@ -183,7 +182,7 @@ func TestUsersSignin(t *testing.T) {
 				t.Fatal(err)
 			}
 
-			initialDB := map[uuid.UUID]*users.User{
+			initialDB := store.MapUsersDB{
 				user.ID: user,
 			}
 

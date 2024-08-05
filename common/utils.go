@@ -5,10 +5,32 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"log"
 	"log/slog"
 	"net/http"
+	"os"
 	"strings"
+
+	"github.com/google/go-cmp/cmp"
+	"github.com/joho/godotenv"
 )
+
+func loadEnv() {
+	if err := godotenv.Load(".env"); err != nil {
+		log.Fatalf("Failed to load env file: %s\n", err.Error())
+	}
+}
+
+func GetEnvVar(key string) string {
+	loadEnv()
+
+	variable := os.Getenv(key)
+	if cmp.Equal(variable, "") {
+		log.Fatalf("%s is not set in as an environment variable\n", key)
+	}
+
+	return variable
+}
 
 func MakeHTTPHandlerFunc(h APIFunc) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {

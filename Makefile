@@ -3,6 +3,10 @@ MAIN_PACKAGE_PATH := ./cmd/api
 PROJECT_NAME := rss-feed-aggregator
 BINARY_NAME := rss-feed
 
+MIGRATIONS_PATH := ./db/migrations
+DRIVER := postgres
+DBSTRING := "postgres://postgres:postgres@localhost:5432/rss_feeds?sslmode=disable"
+
 ## build: build the users api
 .PHONY: build-users
 build-users:
@@ -38,3 +42,33 @@ test:
 test-cover:
 	@go test -v -race -buildvcs -coverprofile=/tmp/coverage.out ./tests/...
 	@go tool cover -html=/tmp/coverage.out
+
+# db-status: gets the migration status of the db
+.PHONY: db-status
+db-status:
+	@goose -dir ${MIGRATIONS_PATH} ${DRIVER} ${DBSTRING} status
+
+# db-status: migrates up the db
+.PHONY: db-up
+db-up:
+	@goose -dir ${MIGRATIONS_PATH} ${DRIVER} ${DBSTRING} up
+
+# db-down: migrates down the db
+.PHONY: db-down
+db-down:
+	@goose -dir ${MIGRATIONS_PATH} ${DRIVER} ${DBSTRING} down
+
+# db-reset: resets the db
+.PHONY: db-reset
+db-reset:
+	@goose -dir ${MIGRATIONS_PATH} ${DRIVER} ${DBSTRING} reset
+
+# db-create-sql: createa sql migration file
+.PHONY: db-create-sql
+db-create-sql:
+	@goose -dir ${MIGRATIONS_PATH} create $(file) sql
+
+# db-create-go: createa go sql migration file
+.PHONY: db-create-go
+db-create-go:
+	@goose -dir ${MIGRATIONS_PATH} create $(file) go

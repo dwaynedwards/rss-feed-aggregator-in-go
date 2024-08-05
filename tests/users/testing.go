@@ -10,7 +10,6 @@ import (
 	"github.com/alexedwards/argon2id"
 	"github.com/dwaynedwards/rss-feed-aggregator-in-go/users"
 	"github.com/google/go-cmp/cmp"
-	"github.com/google/uuid"
 )
 
 type testServer struct {
@@ -31,9 +30,9 @@ type badRequest struct {
 
 type dummyUserStore struct{}
 
-func (d *dummyUserStore) InsertUser(a *users.User) bool        { return true }
-func (d *dummyUserStore) GetUserByID(id uuid.UUID) *users.User { return nil }
-func (d *dummyUserStore) GetUserByEmail(e string) *users.User  { return nil }
+func (d *dummyUserStore) InsertUser(a *users.User) error               { return nil }
+func (d *dummyUserStore) GetUserByID(id int64) (*users.User, error)    { return nil, nil }
+func (d *dummyUserStore) GetUserByEmail(e string) (*users.User, error) { return nil, nil }
 
 var dummyStore = &dummyUserStore{}
 
@@ -48,18 +47,13 @@ func newTestServer(userServer users.UsersServer) *testServer {
 }
 
 func makeUser(email string, password string, name string) (*users.User, error) {
-	id, err := uuid.NewV6()
-	if err != nil {
-		return nil, err
-	}
-
 	hashedPassword, err := argon2id.CreateHash(password, argon2id.DefaultParams)
 	if err != nil {
 		return nil, err
 	}
 
 	return &users.User{
-		ID: id, Email: email, Password: hashedPassword, Name: name,
+		Email: email, Password: hashedPassword, Name: name,
 	}, nil
 }
 
