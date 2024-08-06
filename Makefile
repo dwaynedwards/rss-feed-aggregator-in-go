@@ -3,7 +3,7 @@ MAIN_PACKAGE_PATH := ./cmd/api
 PROJECT_NAME := rss-feed-aggregator
 BINARY_NAME := rss-feed
 
-MIGRATIONS_PATH := ./db/migrations
+MIGRATIONS_PATH := ./store/postgres/migrations
 DRIVER := postgres
 DBSTRING := "postgres://postgres:postgres@localhost:5432/rss_feeds?sslmode=disable"
 
@@ -30,17 +30,17 @@ audit:
 	@go vet ./...
 	@go run honnef.co/go/tools/cmd/staticcheck@latest -checks=all,-ST1000,-U1000 ./...
 	@go run golang.org/x/vuln/cmd/govulncheck@latest ./...
-	@go test -race -buildvcs -vet=off ./tests/...
+	@go test -race -buildvcs -vet=off ./...
 
 ## test: run all tests
 .PHONY: test
 test:
-	@go test -v -race -buildvcs ./tests/...
+	@go test -race -buildvcs ./...
 
 ## test-cover: run all tests and display coverage
 .PHONY: test-cover
 test-cover:
-	@go test -v -race -buildvcs -coverprofile=/tmp/coverage.out ./tests/...
+	@go test -race -buildvcs -coverprofile=/tmp/coverage.out ./...
 	@go tool cover -html=/tmp/coverage.out
 
 # db-status: gets the migration status of the db

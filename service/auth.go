@@ -1,0 +1,83 @@
+package service
+
+import (
+	"context"
+
+	"github.com/alexedwards/argon2id"
+	rf "github.com/dwaynedwards/rss-feed-aggregator-in-go"
+)
+
+type AuthService struct {
+	store rf.AuthStore
+}
+
+func NewAuthService(store rf.AuthStore) *AuthService {
+	return &AuthService{
+		store: store,
+	}
+}
+
+func (s AuthService) SignUp(ctx context.Context, auth *rf.Auth) error {
+	if err := validateSignUp(auth); err != nil {
+		return err
+	}
+
+	hashedPassword, err := argon2id.CreateHash(auth.BasicAuth.Password, argon2id.DefaultParams)
+	if err != nil {
+		return err
+	}
+
+	auth.BasicAuth.Password = hashedPassword
+
+	return s.store.Create(ctx, auth)
+}
+
+func (s AuthService) SignIn(ctx context.Context, auth *rf.Auth) error {
+	if err := validateSignIn(auth); err != nil {
+		return err
+	}
+
+	authFound, err := s.store.FindByEmail(ctx, auth.BasicAuth.Email)
+	if err != nil {
+		return err
+	}
+
+	if authFound == nil {
+		return rf.AppErrorf(rf.ECUnautherized, rf.EMInvlidCredentials)
+	}
+
+	match, err := argon2id.ComparePasswordAndHash(auth.BasicAuth.Password, authFound.BasicAuth.Password)
+	if err != nil {
+		return err
+	}
+	if !match {
+		return rf.AppErrorf(rf.ECUnautherized, rf.EMInvlidCredentials)
+	}
+
+	auth.UserID = authFound.UserID
+
+	return nil
+}
+
+func validateSignUp(auth *rf.Auth) error {
+	if auth.BasicAuth.Email == "" {
+		return rf.AppErrorf(rf.ECInvalid, rf.EMEmailRequired)
+	}
+	if auth.BasicAuth.Password == "" {
+		return rf.AppErrorf(rf.ECInvalid, rf.EMPasswordRequired)
+	}
+	if auth.User == nil || auth.User.Name == "" {
+		return rf.AppErrorf(rf.ECInvalid, rf.EMNameRequired)
+	}
+	return nil
+}
+
+func validateSignIn(auth *rf.Auth) error {
+	if auth.BasicAuth.Email == "" {
+		return rf.AppErrorf(rf.ECInvalid, rf.EMEmailRequired)
+	}
+	if auth.BasicAuth.Password == "" {
+		return rf.AppErrorf(rf.ECInvalid, rf.EMPasswordRequired)
+	}
+	return nil
+}
