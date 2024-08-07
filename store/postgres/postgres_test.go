@@ -2,6 +2,7 @@ package postgres_test
 
 import (
 	"context"
+	"os"
 	"testing"
 
 	rf "github.com/dwaynedwards/rss-feed-aggregator-in-go"
@@ -12,6 +13,10 @@ import (
 )
 
 func TestPostgresDBAuthServiceIntegration(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping TestPostgresDBAuthServiceIntegration in short mode")
+	}
+
 	is := is.New(t)
 
 	db, mig := MustOpenDB(t, is)
@@ -27,9 +32,10 @@ func TestPostgresDBAuthServiceIntegration(t *testing.T) {
 			WithPassword("gogopher1")).
 		Build()
 
-	err := service.SignUp(context.Background(), authSignUpSuccess)
+	token, err := service.SignUp(context.Background(), authSignUpSuccess)
 
 	is.NoErr(err)                                       // should sign up
+	is.True(len(token) > 0)                             // should receive token
 	is.Equal(authSignUpSuccess.UserID, int64(1))        // auth UserID should be 1
 	is.Equal(authSignUpSuccess.ID, int64(1))            // auth ID should be 1
 	is.True(!authSignUpSuccess.CreatedAt.IsZero())      // auth CreatedAt should be set
@@ -42,9 +48,10 @@ func TestPostgresDBAuthServiceIntegration(t *testing.T) {
 			WithPassword("gogopher1")).
 		Build()
 
-	err = service.SignIn(context.Background(), authSignInSuccess)
+	token, err = service.SignIn(context.Background(), authSignInSuccess)
 
 	is.NoErr(err)                                // should sign in
+	is.True(len(token) > 0)                      // should receive token
 	is.Equal(authSignInSuccess.UserID, int64(1)) // auth UserID should be 1
 
 	authSignUpFailure := rf.NewAuthBuilder().
@@ -54,7 +61,7 @@ func TestPostgresDBAuthServiceIntegration(t *testing.T) {
 			WithPassword("gogopher1")).
 		Build()
 
-	err = service.SignUp(context.Background(), authSignUpFailure)
+	_, err = service.SignUp(context.Background(), authSignUpFailure)
 
 	is.True(err != nil) // should fail to sign up with duplicate email
 
@@ -64,7 +71,7 @@ func TestPostgresDBAuthServiceIntegration(t *testing.T) {
 			WithPassword("gogopher1")).
 		Build()
 
-	err = service.SignIn(context.Background(), authSignInEmailFailure)
+	_, err = service.SignIn(context.Background(), authSignInEmailFailure)
 
 	is.True(err != nil) // should fail to sign in with incorrect email
 
@@ -74,7 +81,7 @@ func TestPostgresDBAuthServiceIntegration(t *testing.T) {
 			WithPassword("gogopher2")).
 		Build()
 
-	err = service.SignIn(context.Background(), authSignInPasswordFailure)
+	_, err = service.SignIn(context.Background(), authSignInPasswordFailure)
 
 	is.True(err != nil) // should fail to sign in with incorrect email
 }
@@ -93,7 +100,7 @@ func MustOpenDB(tb testing.TB, is *is.I) (*postgres.DB, *rf.Migration) {
 
 	is.NoErr(goose.SetDialect("postgres"))
 
-	dbURL := "postgres://postgres:postgres@localhost:5432/test_rss_feeds?sslmode=disable"
+	dbURL := os.Getenv("TEST_DATABASE_URL")
 	db := postgres.NewDB(dbURL)
 	is.NoErr(db.Open()) // should open postgres test db connection
 

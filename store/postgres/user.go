@@ -3,13 +3,13 @@ package postgres
 import (
 	"context"
 
-	rssfeed "github.com/dwaynedwards/rss-feed-aggregator-in-go"
+	rf "github.com/dwaynedwards/rss-feed-aggregator-in-go"
 	"github.com/jackc/pgx/v5"
 )
 
 type UserStore struct{}
 
-func createUser(ctx context.Context, tx *Tx, user *rssfeed.User) error {
+func createUser(ctx context.Context, tx *Tx, user *rf.User) error {
 	user.CreatedAt = tx.now
 	user.ModifiedAt = user.CreatedAt
 

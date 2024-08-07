@@ -2,6 +2,7 @@ package service
 
 import (
 	"context"
+	"time"
 
 	"github.com/alexedwards/argon2id"
 	rf "github.com/dwaynedwards/rss-feed-aggregator-in-go"
@@ -17,46 +18,61 @@ func NewAuthService(store rf.AuthStore) *AuthService {
 	}
 }
 
-func (s AuthService) SignUp(ctx context.Context, auth *rf.Auth) error {
+func (s AuthService) SignUp(ctx context.Context, auth *rf.Auth) (string, error) {
 	if err := validateSignUp(auth); err != nil {
-		return err
+		return "", err
 	}
 
 	hashedPassword, err := argon2id.CreateHash(auth.BasicAuth.Password, argon2id.DefaultParams)
 	if err != nil {
-		return err
+		return "", err
 	}
 
 	auth.BasicAuth.Password = hashedPassword
 
-	return s.store.Create(ctx, auth)
+	err = s.store.Create(ctx, auth)
+	if err != nil {
+		return "", err
+	}
+
+	token, err := rf.GenerateAndSignJWT(auth.UserID, time.Now().Add(time.Hour*24))
+	if err != nil {
+		return "", err
+	}
+
+	return token, nil
 }
 
-func (s AuthService) SignIn(ctx context.Context, auth *rf.Auth) error {
+func (s AuthService) SignIn(ctx context.Context, auth *rf.Auth) (string, error) {
 	if err := validateSignIn(auth); err != nil {
-		return err
+		return "", err
 	}
 
 	authFound, err := s.store.FindByEmail(ctx, auth.BasicAuth.Email)
 	if err != nil {
-		return err
+		return "", err
 	}
 
 	if authFound == nil {
-		return rf.AppErrorf(rf.ECUnautherized, rf.EMInvlidCredentials)
+		return "", rf.AppErrorf(rf.ECUnautherized, rf.EMInvlidCredentials)
 	}
 
 	match, err := argon2id.ComparePasswordAndHash(auth.BasicAuth.Password, authFound.BasicAuth.Password)
 	if err != nil {
-		return err
+		return "", err
 	}
 	if !match {
-		return rf.AppErrorf(rf.ECUnautherized, rf.EMInvlidCredentials)
+		return "", rf.AppErrorf(rf.ECUnautherized, rf.EMInvlidCredentials)
 	}
 
 	auth.UserID = authFound.UserID
 
-	return nil
+	token, err := rf.GenerateAndSignJWT(authFound.UserID, time.Now().Add(time.Hour*24))
+	if err != nil {
+		return "", err
+	}
+
+	return token, nil
 }
 
 func validateSignUp(auth *rf.Auth) error {

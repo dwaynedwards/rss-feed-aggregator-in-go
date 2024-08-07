@@ -36,9 +36,10 @@ func TestAuthService_SignUp_Success(t *testing.T) {
 				WithPassword("gogopher1")).
 			Build()
 
-		err := service.SignUp(context.Background(), auth)
+		token, err := service.SignUp(context.Background(), auth)
 
 		is.NoErr(err)                          // should be signed up
+		is.True(len(token) > 0)                // should receive token
 		is.Equal(auth.UserID, int64(1))        // auth UserID should be 1
 		is.Equal(auth.ID, int64(1))            // auth ID should be 1
 		is.True(!auth.CreatedAt.IsZero())      // auth CreatedAt should be set
@@ -62,10 +63,10 @@ func TestAuthService_SignUp_Failure(t *testing.T) {
 			store := &mock.AuthStore{}
 			service := service.NewAuthService(store)
 
-			err := service.SignUp(context.Background(), tc.Auth)
+			_, err := service.SignUp(context.Background(), tc.Auth)
 
 			is.True(err != nil)                       // should be an error
-			is.Equal(rf.AppErrorCode(err), tc.Code)   // shoud have  error code
+			is.Equal(rf.AppErrorCode(err), tc.Code)   // shoud have error code
 			is.Equal(rf.AppErrorMessage(err), tc.Msg) // should have error message
 			is.True(!store.CreateInvoked)             // auth store Create should not have been invoked
 			is.True(!store.FindByEmailInvoked)        // auth store FindByEmail should not have been invoked
@@ -98,9 +99,10 @@ func TestAuthService_SignIn_Success(t *testing.T) {
 				WithPassword(password)).
 			Build()
 
-		err = service.SignIn(context.Background(), authSignIn)
+		token, err := service.SignIn(context.Background(), authSignIn)
 
 		is.NoErr(err)                         // should be signed in
+		is.True(len(token) > 0)               // should receive token
 		is.Equal(authSignIn.UserID, int64(1)) // auth UserID should be 1
 		is.True(!store.CreateInvoked)         // auth store Create should not have been invoked
 		is.True(store.FindByEmailInvoked)     // auth store FindByEmail should  have been invoked
@@ -119,7 +121,7 @@ func TestAuthService_SignIn_Failure(t *testing.T) {
 			store := &mock.AuthStore{}
 			service := service.NewAuthService(store)
 
-			err := service.SignIn(context.Background(), tc.Auth)
+			_, err := service.SignIn(context.Background(), tc.Auth)
 
 			is.True(err != nil)                       // should be an error
 			is.Equal(rf.AppErrorCode(err), tc.Code)   // shoud have  error code

@@ -1,4 +1,4 @@
-package rssfeed
+package rf
 
 import (
 	"context"

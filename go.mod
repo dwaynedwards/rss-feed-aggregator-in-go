@@ -4,6 +4,7 @@ go 1.22.5
 
 require (
 	github.com/alexedwards/argon2id v1.0.0
+	github.com/golang-jwt/jwt/v5 v5.2.1
 	github.com/jackc/pgx/v5 v5.6.0
 	github.com/matryer/is v1.4.1
 	github.com/pressly/goose/v3 v3.21.1
