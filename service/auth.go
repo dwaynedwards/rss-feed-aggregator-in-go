@@ -18,7 +18,7 @@ func NewAuthService(store rf.AuthStore) *AuthService {
 	}
 }
 
-func (s AuthService) SignUp(ctx context.Context, auth *rf.Auth) (string, error) {
+func (a *AuthService) SignUp(ctx context.Context, auth *rf.Auth) (string, error) {
 	if err := validateSignUp(auth); err != nil {
 		return "", err
 	}
@@ -30,7 +30,7 @@ func (s AuthService) SignUp(ctx context.Context, auth *rf.Auth) (string, error) 
 
 	auth.BasicAuth.Password = hashedPassword
 
-	err = s.store.Create(ctx, auth)
+	err = a.store.Create(ctx, auth)
 	if err != nil {
 		return "", err
 	}
@@ -43,12 +43,12 @@ func (s AuthService) SignUp(ctx context.Context, auth *rf.Auth) (string, error) 
 	return token, nil
 }
 
-func (s AuthService) SignIn(ctx context.Context, auth *rf.Auth) (string, error) {
+func (a *AuthService) SignIn(ctx context.Context, auth *rf.Auth) (string, error) {
 	if err := validateSignIn(auth); err != nil {
 		return "", err
 	}
 
-	authFound, err := s.store.FindByEmail(ctx, auth.BasicAuth.Email)
+	authFound, err := a.store.FindByEmail(ctx, auth.BasicAuth.Email)
 	if err != nil {
 		return "", err
 	}
@@ -76,24 +76,41 @@ func (s AuthService) SignIn(ctx context.Context, auth *rf.Auth) (string, error) 
 }
 
 func validateSignUp(auth *rf.Auth) error {
+	errs := map[string]string{}
+
 	if auth.BasicAuth.Email == "" {
-		return rf.AppErrorf(rf.ECInvalid, rf.EMEmailRequired)
+		errs["email"] = rf.EMEmailRequired
 	}
+
 	if auth.BasicAuth.Password == "" {
-		return rf.AppErrorf(rf.ECInvalid, rf.EMPasswordRequired)
+		errs["password"] = rf.EMPasswordRequired
 	}
+
 	if auth.User == nil || auth.User.Name == "" {
-		return rf.AppErrorf(rf.ECInvalid, rf.EMNameRequired)
+		errs["name"] = rf.EMNameRequired
 	}
+
+	if len(errs) > 0 {
+		return rf.BadRequestAppError(errs)
+	}
+
 	return nil
 }
 
 func validateSignIn(auth *rf.Auth) error {
+	errs := map[string]string{}
+
 	if auth.BasicAuth.Email == "" {
-		return rf.AppErrorf(rf.ECInvalid, rf.EMEmailRequired)
+		errs["email"] = rf.EMEmailRequired
 	}
+
 	if auth.BasicAuth.Password == "" {
-		return rf.AppErrorf(rf.ECInvalid, rf.EMPasswordRequired)
+		errs["password"] = rf.EMPasswordRequired
 	}
+
+	if len(errs) > 0 {
+		return rf.BadRequestAppError(errs)
+	}
+
 	return nil
 }

@@ -23,12 +23,31 @@ type BasicAuth struct {
 	Password string `json:"password"`
 }
 
+type SignUpAuthRequest struct {
+	Email    string `json:"email"`
+	Password string `json:"password"`
+	Name     string `json:"name"`
+}
+
+type SignUpAuthResponse struct {
+	Token string `json:"token"`
+}
+
+type SignInAuthRequest struct {
+	Email    string `json:"email"`
+	Password string `json:"password"`
+}
+
+type SignInAuthResponse struct {
+	Token string `json:"token"`
+}
+
 type AuthStore interface {
 	Create(ctx context.Context, auth *Auth) error
 	FindByEmail(ctx context.Context, email string) (*Auth, error)
 }
 
 type AuthService interface {
-	SignUp(ctx context.Context, auth *Auth) error
-	SignIn(ctx context.Context, id int64) error
+	SignUp(ctx context.Context, auth *Auth) (string, error)
+	SignIn(ctx context.Context, auth *Auth) (string, error)
 }

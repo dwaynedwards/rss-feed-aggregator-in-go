@@ -1,84 +1,50 @@
-package common
+package http
 
 import (
 	"encoding/json"
 	"errors"
 	"fmt"
 	"io"
-	"log"
 	"log/slog"
 	"net/http"
-	"os"
 	"strings"
 
-	"github.com/google/go-cmp/cmp"
-	"github.com/joho/godotenv"
+	rf "github.com/dwaynedwards/rss-feed-aggregator-in-go"
 )
 
-func loadEnv() {
-	if err := godotenv.Load(".env"); err != nil {
-		log.Fatalf("Failed to load env file: %s\n", err.Error())
-	}
-}
+type APIFunc func(http.ResponseWriter, *http.Request) error
 
-func GetEnvVar(key string) string {
-	loadEnv()
-
-	variable := os.Getenv(key)
-	if cmp.Equal(variable, "") {
-		log.Fatalf("%s is not set in as an environment variable\n", key)
-	}
-
-	return variable
-}
-
-func MakeHTTPHandlerFunc(h APIFunc) http.HandlerFunc {
+func makeHTTPHandlerFunc(h APIFunc) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		defer closeBody(r)
-
 		if err := h(w, r); err != nil {
-			if apiError, ok := err.(APIError); ok {
-				WriteJSON(w, apiError.StatusCode, apiError)
+			var apiError *rf.APIError
+			if errors.As(err, &apiError) {
+				writeJSON(w, apiError.StatusCode, apiError)
 			} else {
-				errRes := NewAPIError(http.StatusInternalServerError, fmt.Errorf("internal server error"))
-				WriteJSON(w, errRes.StatusCode, errRes)
+				errRes := rf.InternalAPIError()
+				writeJSON(w, errRes.StatusCode, errRes)
 			}
 			slog.Error("HTTP API error", "err", err.Error(), "path", r.URL.Path)
 		}
 	}
 }
 
-func closeBody(r *http.Request) {
-	if r.Body == nil {
-		return
-	}
-	io.Copy(io.Discard, r.Body)
-	r.Body.Close()
-}
-
-func WriteJSON(w http.ResponseWriter, status int, data any) error {
+func writeJSON(w http.ResponseWriter, status int, data any) error {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(status)
 	return json.NewEncoder(w).Encode(data)
 }
 
-func DecodeJSON(w http.ResponseWriter, r *http.Request, dst any) error {
-	return decodeJSON(w, r, dst, false)
-}
+func decodeJSON(w http.ResponseWriter, r *http.Request, dst any) error {
+	if r.Body == nil {
+		return errors.New("body is empty")
+	}
 
-func DecodeJSONStrict(w http.ResponseWriter, r *http.Request, dst any) error {
-	return decodeJSON(w, r, dst, true)
-}
-
-func decodeJSON(w http.ResponseWriter, r *http.Request, dst any, disallowUnknownFields bool) error {
 	maxBytes := 1_048_576
 	r.Body = http.MaxBytesReader(w, r.Body, int64(maxBytes))
 
 	dec := json.NewDecoder(r.Body)
-
-	if disallowUnknownFields {
-		dec.DisallowUnknownFields()
-	}
+	dec.DisallowUnknownFields()
 
 	err := dec.Decode(dst)
 	if err != nil {
@@ -116,6 +82,8 @@ func decodeJSON(w http.ResponseWriter, r *http.Request, dst any, disallowUnknown
 			return err
 		}
 	}
+	io.Copy(io.Discard, r.Body)
+	r.Body.Close()
 
 	err = dec.Decode(&struct{}{})
 	if !errors.Is(err, io.EOF) {

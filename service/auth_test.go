@@ -3,6 +3,7 @@ package service_test
 import (
 	"context"
 	"fmt"
+	"strings"
 	"testing"
 	"time"
 
@@ -17,15 +18,16 @@ func TestAuthService_SignUp_Success(t *testing.T) {
 	is := is.New(t)
 
 	t.Run("Should succeed with sign up", func(t *testing.T) {
-		store := mock.NewAuthStore(mock.WithCreate(
-			func(ctx context.Context, auth *rf.Auth) error {
+		store := &mock.AuthStore{
+			CreateFn: func(ctx context.Context, auth *rf.Auth) error {
 				auth.ID = 1
 				auth.UserID = 1
 				auth.CreatedAt = time.Now()
 				auth.ModifiedAt = time.Now()
 				auth.LastSignedInAt = time.Now()
 				return nil
-			}))
+			},
+		}
 
 		service := service.NewAuthService(store)
 
@@ -65,11 +67,11 @@ func TestAuthService_SignUp_Failure(t *testing.T) {
 
 			_, err := service.SignUp(context.Background(), tc.Auth)
 
-			is.True(err != nil)                       // should be an error
-			is.Equal(rf.AppErrorCode(err), tc.Code)   // shoud have error code
-			is.Equal(rf.AppErrorMessage(err), tc.Msg) // should have error message
-			is.True(!store.CreateInvoked)             // auth store Create should not have been invoked
-			is.True(!store.FindByEmailInvoked)        // auth store FindByEmail should not have been invoked
+			is.True(err != nil)                                        // should be an error
+			is.Equal(rf.AppErrorCode(err), tc.Code)                    // shoud have error code
+			is.True(strings.Contains(rf.AppErrorMessage(err), tc.Msg)) // should have error message
+			is.True(!store.CreateInvoked)                              // auth store Create should not have been invoked
+			is.True(!store.FindByEmailInvoked)                         // auth store FindByEmail should not have been invoked
 		})
 	}
 }
@@ -82,14 +84,15 @@ func TestAuthService_SignIn_Success(t *testing.T) {
 		hashedPassword, err := argon2id.CreateHash(password, argon2id.DefaultParams)
 		is.NoErr(err) // Should hash password
 
-		store := mock.NewAuthStore(mock.WithFindByEmail(
-			func(ctx context.Context, email string) (*rf.Auth, error) {
+		store := &mock.AuthStore{
+			FindByEmailFn: func(ctx context.Context, email string) (*rf.Auth, error) {
 				auth := rf.NewAuthBuilder().
 					WithUserID(1).
 					WithBasicAuth(rf.NewBasicAuthBuilder().WithPassword(hashedPassword)).
 					Build()
 				return auth, nil
-			}))
+			},
+		}
 
 		service := service.NewAuthService(store)
 
@@ -123,11 +126,11 @@ func TestAuthService_SignIn_Failure(t *testing.T) {
 
 			_, err := service.SignIn(context.Background(), tc.Auth)
 
-			is.True(err != nil)                       // should be an error
-			is.Equal(rf.AppErrorCode(err), tc.Code)   // shoud have  error code
-			is.Equal(rf.AppErrorMessage(err), tc.Msg) // should have error message
-			is.True(!store.CreateInvoked)             // auth store Create should not have been invoked
-			is.True(!store.FindByEmailInvoked)        // auth store FindByEmail should not have been invoked
+			is.True(err != nil)                                        // should be an error
+			is.Equal(rf.AppErrorCode(err), tc.Code)                    // shoud have  error code
+			is.True(strings.Contains(rf.AppErrorMessage(err), tc.Msg)) // should have error message
+			is.True(!store.CreateInvoked)                              // auth store Create should not have been invoked
+			is.True(!store.FindByEmailInvoked)                         // auth store FindByEmail should not have been invoked
 		})
 	}
 }

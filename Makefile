@@ -1,5 +1,5 @@
 # Change these variables as necessary.
-MAIN_PACKAGE_PATH := ./cmd/api
+API_PACKAGE_PATH := ./cmd/api
 PROJECT_NAME := rss-feed-aggregator
 BINARY_NAME := rss-feed
 
@@ -7,17 +7,17 @@ MIGRATIONS_PATH := ./store/postgres/migrations
 DRIVER := postgres
 DBSTRING := "postgres://postgres:postgres@localhost:5432/rss_feeds?sslmode=disable"
 
-## build: build the users api
-.PHONY: build-users
-build-users:
-	@go build -o=/tmp/${PROJECT_NAME}/bin/${BINARY_NAME}-users-api ${MAIN_PACKAGE_PATH}/users
+## build: build the api
+.PHONY: build-api
+build:
+	@go build -o=/tmp/${PROJECT_NAME}/bin/${BINARY_NAME}-api ${API_PACKAGE_PATH}
 
-## run: run the users api
-.PHONY: run-users
-run-users: build-users
-	@/tmp/${PROJECT_NAME}/bin/${BINARY_NAME}-users-api
+## run: run the api
+.PHONY: run-api
+run: build-api
+	@/tmp/${PROJECT_NAME}/bin/${BINARY_NAME}-api
 
-## tidy: format code and tidy modfile
+## tidy: format code and tidy modfile 
 .PHONY: tidy
 tidy:
 	@go fmt ./...
@@ -35,7 +35,17 @@ audit:
 ## test: run all tests
 .PHONY: test
 test:
-	@go test -v -race -buildvcs ./...
+	@go clean -testcache && go test -race -buildvcs ./...
+
+## test: run all tests
+.PHONY: test-short
+test-short:
+	@go clean -testcache && go test -race -buildvcs -short ./...
+
+## test-v: run all tests
+.PHONY: test-v
+test-v:
+	@go clean -testcache && go test -v -race -buildvcs  ./...
 
 ## test-cover: run all tests and display coverage
 .PHONY: test-cover

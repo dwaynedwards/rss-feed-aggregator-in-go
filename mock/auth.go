@@ -29,38 +29,41 @@ var AuthWithMissingName = rf.NewAuthBuilder().
 		WithPassword("gogopher1")).
 	Build()
 
-type (
-	optionsStoreFunc   func(c *AuthStore)
-	optionsServiceFunc func(c *AuthService)
-)
+type AuthAPIFailureCase struct {
+	Desc       string
+	AuthReq    any
+	StatusCode int
+	Msg        string
+}
+
+var SignUpAuthAPIWithMissingEmail = rf.NewSignUpAuthRequestBuilder().
+	WithPassword("password1").
+	WithName("Gopher").
+	Build()
+
+var SignUpAuthAPIWithMissingPassword = rf.NewSignUpAuthRequestBuilder().
+	WithEmail("gopher@go.com").
+	WithName("Gopher").
+	Build()
+
+var SignUpAuthAPIWithMissingName = rf.NewSignUpAuthRequestBuilder().
+	WithEmail("gopher1@go.com").
+	WithPassword("gogopher1").
+	Build()
+
+var SignInAuthAPIWithMissingEmail = rf.NewSignInAuthRequestBuilder().
+	WithPassword("password1").
+	Build()
+
+var SignInAuthAPIWithMissingPassword = rf.NewSignInAuthRequestBuilder().
+	WithEmail("gopher@go.com").
+	Build()
 
 type AuthStore struct {
 	CreateFn           func(ctx context.Context, auth *rf.Auth) error
 	CreateInvoked      bool
 	FindByEmailFn      func(ctx context.Context, email string) (*rf.Auth, error)
 	FindByEmailInvoked bool
-}
-
-func NewAuthStore(opts ...optionsStoreFunc) *AuthStore {
-	store := &AuthStore{}
-
-	for _, opt := range opts {
-		opt(store)
-	}
-
-	return store
-}
-
-func WithCreate(fn func(ctx context.Context, auth *rf.Auth) error) optionsStoreFunc {
-	return func(c *AuthStore) {
-		c.CreateFn = fn
-	}
-}
-
-func WithFindByEmail(fn func(ctx context.Context, email string) (*rf.Auth, error)) optionsStoreFunc {
-	return func(c *AuthStore) {
-		c.FindByEmailFn = fn
-	}
 }
 
 func (a *AuthStore) Create(ctx context.Context, auth *rf.Auth) error {
@@ -74,24 +77,18 @@ func (a *AuthStore) FindByEmail(ctx context.Context, email string) (*rf.Auth, er
 }
 
 type AuthService struct {
-	SignUpFn func(ctx context.Context, auth *rf.Auth) error
-	SignInFn func(ctx context.Context, id int64) error
-}
-
-func NewAuthService(opts ...optionsServiceFunc) *AuthService {
-	service := &AuthService{}
-
-	for _, opt := range opts {
-		opt(service)
-	}
-
-	return service
+	SignUpFn      func(ctx context.Context, auth *rf.Auth) error
+	SignUpInvoked bool
+	SignInFn      func(ctx context.Context, id int64) error
+	SignInInvoked bool
 }
 
 func (a *AuthService) SignUp(ctx context.Context, auth *rf.Auth) error {
+	a.SignUpInvoked = true
 	return a.SignUpFn(ctx, auth)
 }
 
 func (a *AuthService) SignIn(ctx context.Context, id int64) error {
+	a.SignInInvoked = true
 	return a.SignInFn(ctx, id)
 }

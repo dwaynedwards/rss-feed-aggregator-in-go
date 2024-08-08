@@ -19,8 +19,8 @@ func TestPostgresDBAuthServiceIntegration(t *testing.T) {
 
 	is := is.New(t)
 
-	db, mig := MustOpenDB(t, is)
-	defer MustCloseDB(t, is, db, mig)
+	db, mig := mustOpenDB(t, is)
+	defer mustCloseDB(t, is, db, mig)
 
 	store := postgres.NewAuthStore(db)
 	service := service.NewAuthService(store)
@@ -61,9 +61,10 @@ func TestPostgresDBAuthServiceIntegration(t *testing.T) {
 			WithPassword("gogopher1")).
 		Build()
 
-	_, err = service.SignUp(context.Background(), authSignUpFailure)
+	token, err = service.SignUp(context.Background(), authSignUpFailure)
 
-	is.True(err != nil) // should fail to sign up with duplicate email
+	is.True(err != nil)      // should fail to sign up with duplicate email
+	is.True(len(token) == 0) // should receive no token
 
 	authSignInEmailFailure := rf.NewAuthBuilder().
 		WithBasicAuth(rf.NewBasicAuthBuilder().
@@ -71,9 +72,10 @@ func TestPostgresDBAuthServiceIntegration(t *testing.T) {
 			WithPassword("gogopher1")).
 		Build()
 
-	_, err = service.SignIn(context.Background(), authSignInEmailFailure)
+	token, err = service.SignIn(context.Background(), authSignInEmailFailure)
 
-	is.True(err != nil) // should fail to sign in with incorrect email
+	is.True(err != nil)      // should fail to sign in with incorrect email
+	is.True(len(token) == 0) // should receive no token
 
 	authSignInPasswordFailure := rf.NewAuthBuilder().
 		WithBasicAuth(rf.NewBasicAuthBuilder().
@@ -81,21 +83,13 @@ func TestPostgresDBAuthServiceIntegration(t *testing.T) {
 			WithPassword("gogopher2")).
 		Build()
 
-	_, err = service.SignIn(context.Background(), authSignInPasswordFailure)
+	token, err = service.SignIn(context.Background(), authSignInPasswordFailure)
 
-	is.True(err != nil) // should fail to sign in with incorrect email
+	is.True(err != nil)      // should fail to sign in with incorrect email
+	is.True(len(token) == 0) // should receive no token
 }
 
-func MustCloseDB(tb testing.TB, is *is.I, db *postgres.DB, migration *rf.Migration) {
-	tb.Helper()
-
-	is.NoErr(migration.Reset()) // should reset migration
-	is.NoErr(migration.Close()) // should close migration postgres test db connection
-
-	db.Close()
-}
-
-func MustOpenDB(tb testing.TB, is *is.I) (*postgres.DB, *rf.Migration) {
+func mustOpenDB(tb testing.TB, is *is.I) (*postgres.DB, *rf.Migration) {
 	tb.Helper()
 
 	is.NoErr(goose.SetDialect("postgres"))
@@ -109,4 +103,13 @@ func MustOpenDB(tb testing.TB, is *is.I) (*postgres.DB, *rf.Migration) {
 
 	is.NoErr(migration.Up()) // should up migration
 	return db, migration
+}
+
+func mustCloseDB(tb testing.TB, is *is.I, db *postgres.DB, migration *rf.Migration) {
+	tb.Helper()
+
+	is.NoErr(migration.Reset()) // should reset migration
+	is.NoErr(migration.Close()) // should close migration postgres test db connection
+
+	db.Close()
 }

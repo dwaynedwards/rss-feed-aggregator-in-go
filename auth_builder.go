@@ -74,3 +74,56 @@ func (b *basicAuthBuilder) WithPassword(password string) *basicAuthBuilder {
 func (b *basicAuthBuilder) Build() *BasicAuth {
 	return b.basicAuth
 }
+
+type signUpAuthRequestBuilder struct {
+	signUpAuthRequest *SignUpAuthRequest
+}
+
+func NewSignUpAuthRequestBuilder() *signUpAuthRequestBuilder {
+	return &signUpAuthRequestBuilder{
+		signUpAuthRequest: &SignUpAuthRequest{},
+	}
+}
+
+func (b *signUpAuthRequestBuilder) WithEmail(email string) *signUpAuthRequestBuilder {
+	b.signUpAuthRequest.Email = email
+	return b
+}
+
+func (b *signUpAuthRequestBuilder) WithPassword(password string) *signUpAuthRequestBuilder {
+	b.signUpAuthRequest.Password = password
+	return b
+}
+
+func (b *signUpAuthRequestBuilder) WithName(name string) *signUpAuthRequestBuilder {
+	b.signUpAuthRequest.Name = name
+	return b
+}
+
+func (b *signUpAuthRequestBuilder) Build() *SignUpAuthRequest {
+	return b.signUpAuthRequest
+}
+
+type signInAuthRequestBuilder struct {
+	signInAuthRequest *SignInAuthRequest
+}
+
+func NewSignInAuthRequestBuilder() *signInAuthRequestBuilder {
+	return &signInAuthRequestBuilder{
+		signInAuthRequest: &SignInAuthRequest{},
+	}
+}
+
+func (b *signInAuthRequestBuilder) WithEmail(email string) *signInAuthRequestBuilder {
+	b.signInAuthRequest.Email = email
+	return b
+}
+
+func (b *signInAuthRequestBuilder) WithPassword(password string) *signInAuthRequestBuilder {
+	b.signInAuthRequest.Password = password
+	return b
+}
+
+func (b *signInAuthRequestBuilder) Build() *SignInAuthRequest {
+	return b.signInAuthRequest
+}

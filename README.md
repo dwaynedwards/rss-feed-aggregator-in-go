@@ -1,3 +1,17 @@
-# A RSS Feed Aggregator In Go
+# A RSS Feed Aggregator In Go - WIP
 
 [![Audit](https://github.com/dwaynedwards/rss-feed-aggregator-in-go/actions/workflows/audit.yml/badge.svg)](https://github.com/dwaynedwards/rss-feed-aggregator-in-go/actions/workflows/audit.yml)
+
+A RSS feed aggregator that supports (when feature complete - WIP):
+
+- Signup/Signin for a user account
+- Add/Remove RSS urls
+- Browse RSS feels that other users have added
+
+Learning outcomes:
+
+- TDD
+- Concurrency/Goroutines/Channels
+- Context
+- gRPC
+- Websockets
