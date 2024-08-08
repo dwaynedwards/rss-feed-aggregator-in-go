@@ -2,27 +2,31 @@ package postgres_test
 
 import (
 	"context"
-	"os"
 	"testing"
 
 	rf "github.com/dwaynedwards/rss-feed-aggregator-in-go"
 	"github.com/dwaynedwards/rss-feed-aggregator-in-go/service"
-	"github.com/dwaynedwards/rss-feed-aggregator-in-go/store/postgres"
+	rfpg "github.com/dwaynedwards/rss-feed-aggregator-in-go/store/postgres"
+	"github.com/dwaynedwards/rss-feed-aggregator-in-go/testcontainers"
 	"github.com/matryer/is"
-	"github.com/pressly/goose/v3"
 )
 
 func TestPostgresDBAuthServiceIntegration(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping TestPostgresDBAuthServiceIntegration in short mode")
-	}
+	t.Parallel()
 
 	is := is.New(t)
 
-	db, mig := mustOpenDB(t, is)
-	defer mustCloseDB(t, is, db, mig)
+	ctx := context.Background()
 
-	store := postgres.NewAuthStore(db)
+	container, err := testcontainers.NewPostgresTestContainer(ctx)
+	is.NoErr(err)
+
+	t.Cleanup(func() {
+		err := container.Cleanup(ctx)
+		is.NoErr(err) // failed to terminate pgContainer
+	})
+
+	store := rfpg.NewAuthStore(container.DB)
 	service := service.NewAuthService(store)
 
 	authSignUpSuccess := rf.NewAuthBuilder().
@@ -32,7 +36,7 @@ func TestPostgresDBAuthServiceIntegration(t *testing.T) {
 			WithPassword("gogopher1")).
 		Build()
 
-	token, err := service.SignUp(context.Background(), authSignUpSuccess)
+	token, err := service.SignUp(ctx, authSignUpSuccess)
 
 	is.NoErr(err)                                       // should sign up
 	is.True(len(token) > 0)                             // should receive token
@@ -48,7 +52,7 @@ func TestPostgresDBAuthServiceIntegration(t *testing.T) {
 			WithPassword("gogopher1")).
 		Build()
 
-	token, err = service.SignIn(context.Background(), authSignInSuccess)
+	token, err = service.SignIn(ctx, authSignInSuccess)
 
 	is.NoErr(err)                                // should sign in
 	is.True(len(token) > 0)                      // should receive token
@@ -61,7 +65,7 @@ func TestPostgresDBAuthServiceIntegration(t *testing.T) {
 			WithPassword("gogopher1")).
 		Build()
 
-	token, err = service.SignUp(context.Background(), authSignUpFailure)
+	token, err = service.SignUp(ctx, authSignUpFailure)
 
 	is.True(err != nil)      // should fail to sign up with duplicate email
 	is.True(len(token) == 0) // should receive no token
@@ -72,7 +76,7 @@ func TestPostgresDBAuthServiceIntegration(t *testing.T) {
 			WithPassword("gogopher1")).
 		Build()
 
-	token, err = service.SignIn(context.Background(), authSignInEmailFailure)
+	token, err = service.SignIn(ctx, authSignInEmailFailure)
 
 	is.True(err != nil)      // should fail to sign in with incorrect email
 	is.True(len(token) == 0) // should receive no token
@@ -83,33 +87,8 @@ func TestPostgresDBAuthServiceIntegration(t *testing.T) {
 			WithPassword("gogopher2")).
 		Build()
 
-	token, err = service.SignIn(context.Background(), authSignInPasswordFailure)
+	token, err = service.SignIn(ctx, authSignInPasswordFailure)
 
 	is.True(err != nil)      // should fail to sign in with incorrect email
 	is.True(len(token) == 0) // should receive no token
-}
-
-func mustOpenDB(tb testing.TB, is *is.I) (*postgres.DB, *rf.Migration) {
-	tb.Helper()
-
-	is.NoErr(goose.SetDialect("postgres"))
-
-	dbURL := os.Getenv("TEST_DATABASE_URL")
-	db := postgres.NewDB(dbURL)
-	is.NoErr(db.Open()) // should open postgres test db connection
-
-	migration, err := postgres.NewMigration(db, false)
-	is.NoErr(err) // should create migration
-
-	is.NoErr(migration.Up()) // should up migration
-	return db, migration
-}
-
-func mustCloseDB(tb testing.TB, is *is.I, db *postgres.DB, migration *rf.Migration) {
-	tb.Helper()
-
-	is.NoErr(migration.Reset()) // should reset migration
-	is.NoErr(migration.Close()) // should close migration postgres test db connection
-
-	db.Close()
 }

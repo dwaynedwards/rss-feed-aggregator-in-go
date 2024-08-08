@@ -15,9 +15,13 @@ import (
 )
 
 func TestAuthService_SignUp_Success(t *testing.T) {
+	t.Parallel()
+
 	is := is.New(t)
 
 	t.Run("Should succeed with sign up", func(t *testing.T) {
+		t.Parallel()
+
 		store := &mock.AuthStore{
 			CreateFn: func(ctx context.Context, auth *rf.Auth) error {
 				auth.ID = 1
@@ -53,6 +57,8 @@ func TestAuthService_SignUp_Success(t *testing.T) {
 }
 
 func TestAuthService_SignUp_Failure(t *testing.T) {
+	t.Parallel()
+
 	is := is.New(t)
 
 	signUpFailureCases := []mock.AuthFailureCase{
@@ -62,6 +68,8 @@ func TestAuthService_SignUp_Failure(t *testing.T) {
 	}
 	for _, tc := range signUpFailureCases {
 		t.Run(fmt.Sprintf("Should fail to sign up %s", tc.Desc), func(t *testing.T) {
+			t.Parallel()
+
 			store := &mock.AuthStore{}
 			service := service.NewAuthService(store)
 
@@ -77,9 +85,13 @@ func TestAuthService_SignUp_Failure(t *testing.T) {
 }
 
 func TestAuthService_SignIn_Success(t *testing.T) {
+	t.Parallel()
+
 	is := is.New(t)
 
 	t.Run("Should succeed with sign in", func(t *testing.T) {
+		t.Parallel()
+
 		password := "gogopher1"
 		hashedPassword, err := argon2id.CreateHash(password, argon2id.DefaultParams)
 		is.NoErr(err) // Should hash password
@@ -113,6 +125,8 @@ func TestAuthService_SignIn_Success(t *testing.T) {
 }
 
 func TestAuthService_SignIn_Failure(t *testing.T) {
+	t.Parallel()
+
 	is := is.New(t)
 
 	signUpFailureCases := []mock.AuthFailureCase{
@@ -121,6 +135,8 @@ func TestAuthService_SignIn_Failure(t *testing.T) {
 	}
 	for _, tc := range signUpFailureCases {
 		t.Run(fmt.Sprintf("Should fail to sign in %s", tc.Desc), func(t *testing.T) {
+			t.Parallel()
+
 			store := &mock.AuthStore{}
 			service := service.NewAuthService(store)
 

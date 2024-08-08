@@ -9,6 +9,8 @@ import (
 )
 
 func TestJWT(t *testing.T) {
+	t.Parallel()
+
 	is := is.New(t)
 
 	token, err := rf.GenerateAndSignJWT(1, time.Now())

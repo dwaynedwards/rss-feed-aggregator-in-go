@@ -17,9 +17,13 @@ import (
 )
 
 func TestAuthAPI_SignUp_Success(t *testing.T) {
+	t.Parallel()
+
 	is := is.New(t)
 
 	t.Run("POST /api/v1/auths/signup signs up a user and returns 201", func(t *testing.T) {
+		t.Parallel()
+
 		store := &mock.AuthStore{
 			CreateFn: func(ctx context.Context, auth *rf.Auth) error {
 				auth.ID = 1
@@ -57,6 +61,8 @@ func TestAuthAPI_SignUp_Success(t *testing.T) {
 }
 
 func TestAuthService_SignUp_Failure(t *testing.T) {
+	t.Parallel()
+
 	is := is.New(t)
 
 	signUpFailureCases := []mock.AuthAPIFailureCase{
@@ -66,6 +72,8 @@ func TestAuthService_SignUp_Failure(t *testing.T) {
 	}
 	for _, tc := range signUpFailureCases {
 		t.Run(fmt.Sprintf("Should fail to sign up %s", tc.Desc), func(t *testing.T) {
+			t.Parallel()
+
 			store := &mock.AuthStore{}
 			s := makeAPIServer(store)
 
@@ -95,27 +103,13 @@ func TestAuthService_SignUp_Failure(t *testing.T) {
 }
 
 func TestAuthAPI_SignIn_Success(t *testing.T) {
+	t.Parallel()
+
 	is := is.New(t)
 
 	t.Run("POST /api/v1/auths/signin signs in a user and returns 200", func(t *testing.T) {
-		// db, mig := mustOpenDB(t, is)
-		// defer mustCloseDB(t, is, db, mig)
+		t.Parallel()
 
-		// s := makeAPIServer(postgres.NewAuthStore(db))
-
-		// req := rf.NewSignUpAuthRequestBuilder().
-		// WithEmail("gopher@go.com").
-		// WithPassword("password1").
-		// WithName("Gopher").
-		// Build()
-		// body := jsonBodyReaderFromStruct(is, req)
-
-		// request, err := http.NewRequest(http.MethodPost, "/api/v1/auths/signup", body)
-		// is.NoErr(err) // should be a successful request
-
-		// response := httptest.NewRecorder()
-
-		// s.ServeHTTP(response, request)
 		password := "gogopher1"
 		hashedPassword, err := argon2id.CreateHash(password, argon2id.DefaultParams)
 		is.NoErr(err) // Should hash password
@@ -157,6 +151,8 @@ func TestAuthAPI_SignIn_Success(t *testing.T) {
 }
 
 func TestAuthService_SignIn_Failure(t *testing.T) {
+	t.Parallel()
+
 	is := is.New(t)
 
 	signUpFailureCases := []mock.AuthAPIFailureCase{
@@ -165,6 +161,8 @@ func TestAuthService_SignIn_Failure(t *testing.T) {
 	}
 	for _, tc := range signUpFailureCases {
 		t.Run(fmt.Sprintf("Should fail to sign up %s", tc.Desc), func(t *testing.T) {
+			t.Parallel()
+
 			store := &mock.AuthStore{}
 			s := makeAPIServer(store)
 

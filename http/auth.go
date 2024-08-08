@@ -67,10 +67,6 @@ func getSignUpAuth(w http.ResponseWriter, r *http.Request) (*rf.Auth, error) {
 	}
 
 	if err := validateSignUpRequest(req); err != nil {
-		// return nil, &rf.APIError{
-		// 	StatusCode: 1000,
-		// 	Msg:        err,
-		// }
 		return nil, err
 	}
 

@@ -2,19 +2,19 @@ package http_test
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"io"
 	"net/http"
 	"net/http/httptest"
-	"os"
 	"testing"
 
 	rf "github.com/dwaynedwards/rss-feed-aggregator-in-go"
 	rfhttp "github.com/dwaynedwards/rss-feed-aggregator-in-go/http"
 	"github.com/dwaynedwards/rss-feed-aggregator-in-go/service"
 	"github.com/dwaynedwards/rss-feed-aggregator-in-go/store/postgres"
+	"github.com/dwaynedwards/rss-feed-aggregator-in-go/testcontainers"
 	"github.com/matryer/is"
-	"github.com/pressly/goose/v3"
 )
 
 type APIServer struct {
@@ -22,16 +22,21 @@ type APIServer struct {
 }
 
 func TestPostgresDBAuthServiceAPIServerIntegration(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping TestPostgresDBAuthServiceAPIServerIntegration in short mode")
-	}
+	t.Parallel()
 
 	is := is.New(t)
 
-	db, mig := mustOpenDB(t, is)
-	defer mustCloseDB(t, is, db, mig)
+	ctx := context.Background()
 
-	s := makeAPIServer(postgres.NewAuthStore(db))
+	container, err := testcontainers.NewPostgresTestContainer(ctx)
+	is.NoErr(err)
+
+	t.Cleanup(func() {
+		err := container.Cleanup(ctx)
+		is.NoErr(err) // failed to terminate pgContainer
+	})
+
+	s := makeAPIServer(postgres.NewAuthStore(container.DB))
 
 	req := rf.NewSignUpAuthRequestBuilder().
 		WithEmail("gopher@go.com").
@@ -67,31 +72,6 @@ func TestPostgresDBAuthServiceAPIServerIntegration(t *testing.T) {
 
 	is.NoErr(err)               // should have a response
 	is.True(len(got.Token) > 0) // should have a token
-}
-
-func mustOpenDB(tb testing.TB, is *is.I) (*postgres.DB, *rf.Migration) {
-	tb.Helper()
-
-	is.NoErr(goose.SetDialect("postgres"))
-
-	dbURL := os.Getenv("TEST_DATABASE_URL")
-	db := postgres.NewDB(dbURL)
-	is.NoErr(db.Open()) // should open postgres test db connection
-
-	migration, err := postgres.NewMigration(db, false)
-	is.NoErr(err) // should create migration
-
-	is.NoErr(migration.Up()) // should up migration
-	return db, migration
-}
-
-func mustCloseDB(tb testing.TB, is *is.I, db *postgres.DB, migration *rf.Migration) {
-	tb.Helper()
-
-	is.NoErr(migration.Reset()) // should reset migration
-	is.NoErr(migration.Close()) // should close migration postgres test db connection
-
-	db.Close()
 }
 
 func makeAPIServer(store rf.AuthStore) *APIServer {
