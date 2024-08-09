@@ -4,6 +4,7 @@ import (
 	"net/http"
 
 	rf "github.com/dwaynedwards/rss-feed-aggregator-in-go"
+	"github.com/dwaynedwards/rss-feed-aggregator-in-go/builder"
 )
 
 func (s *APIServer) registerAuthRoutes(r *http.ServeMux) {
@@ -70,10 +71,10 @@ func getSignUpAuth(w http.ResponseWriter, r *http.Request) (*rf.Auth, error) {
 		return nil, err
 	}
 
-	return rf.NewAuthBuilder().
-		WithUser(rf.NewUserBuilder().
+	return builder.NewAuthBuilder().
+		WithUser(builder.NewUserBuilder().
 			WithName(req.Name)).
-		WithBasicAuth(rf.NewBasicAuthBuilder().
+		WithBasicAuth(builder.NewBasicAuthBuilder().
 			WithEmail(req.Email).
 			WithPassword(req.Password)).
 		Build(), nil
@@ -112,8 +113,8 @@ func getSignInAuth(w http.ResponseWriter, r *http.Request) (*rf.Auth, error) {
 		return nil, err
 	}
 
-	return rf.NewAuthBuilder().
-		WithBasicAuth(rf.NewBasicAuthBuilder().
+	return builder.NewAuthBuilder().
+		WithBasicAuth(builder.NewBasicAuthBuilder().
 			WithEmail(req.Email).
 			WithPassword(req.Password)).
 		Build(), nil

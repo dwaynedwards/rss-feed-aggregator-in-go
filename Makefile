@@ -77,8 +77,3 @@ db-reset:
 .PHONY: db-create-sql
 db-create-sql:
 	@goose -dir ${MIGRATIONS_PATH} create $(file) sql
-
-# db-create-go: createa go sql migration file
-.PHONY: db-create-go
-db-create-go:
-	@goose -dir ${MIGRATIONS_PATH} create $(file) go

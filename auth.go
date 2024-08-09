@@ -13,6 +13,8 @@ type Auth struct {
 
 	BasicAuth *BasicAuth `json:"basicAuth"`
 
+	Enabled        bool      `json:"enabled"`
+	Deleted        bool      `json:"deleted"`
 	CreatedAt      time.Time `json:"createdAt"`
 	ModifiedAt     time.Time `json:"modifiedAt"`
 	LastSignedInAt time.Time `json:"lastSignedInAt"`

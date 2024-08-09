@@ -4,6 +4,7 @@ import (
 	"context"
 
 	rf "github.com/dwaynedwards/rss-feed-aggregator-in-go"
+	"github.com/dwaynedwards/rss-feed-aggregator-in-go/builder"
 )
 
 type AuthFailureCase struct {
@@ -13,18 +14,18 @@ type AuthFailureCase struct {
 	Msg  string
 }
 
-var AuthWithMissingEmail = rf.NewAuthBuilder().
-	WithUser(rf.NewUserBuilder().WithName("Gopher")).
-	WithBasicAuth(rf.NewBasicAuthBuilder().WithPassword("gogopher1")).
+var AuthWithMissingEmail = builder.NewAuthBuilder().
+	WithUser(builder.NewUserBuilder().WithName("Gopher")).
+	WithBasicAuth(builder.NewBasicAuthBuilder().WithPassword("gogopher1")).
 	Build()
 
-var AuthWithMissingPassword = rf.NewAuthBuilder().
-	WithUser(rf.NewUserBuilder().WithName("Gopher")).
-	WithBasicAuth(rf.NewBasicAuthBuilder().WithEmail("gopher1@go.com")).
+var AuthWithMissingPassword = builder.NewAuthBuilder().
+	WithUser(builder.NewUserBuilder().WithName("Gopher")).
+	WithBasicAuth(builder.NewBasicAuthBuilder().WithEmail("gopher1@go.com")).
 	Build()
 
-var AuthWithMissingName = rf.NewAuthBuilder().
-	WithBasicAuth(rf.NewBasicAuthBuilder().
+var AuthWithMissingName = builder.NewAuthBuilder().
+	WithBasicAuth(builder.NewBasicAuthBuilder().
 		WithEmail("gopher1@go.com").
 		WithPassword("gogopher1")).
 	Build()
@@ -36,26 +37,26 @@ type AuthAPIFailureCase struct {
 	Msg        string
 }
 
-var SignUpAuthAPIWithMissingEmail = rf.NewSignUpAuthRequestBuilder().
+var SignUpAuthAPIWithMissingEmail = builder.NewSignUpAuthRequestBuilder().
 	WithPassword("password1").
 	WithName("Gopher").
 	Build()
 
-var SignUpAuthAPIWithMissingPassword = rf.NewSignUpAuthRequestBuilder().
+var SignUpAuthAPIWithMissingPassword = builder.NewSignUpAuthRequestBuilder().
 	WithEmail("gopher@go.com").
 	WithName("Gopher").
 	Build()
 
-var SignUpAuthAPIWithMissingName = rf.NewSignUpAuthRequestBuilder().
+var SignUpAuthAPIWithMissingName = builder.NewSignUpAuthRequestBuilder().
 	WithEmail("gopher1@go.com").
 	WithPassword("gogopher1").
 	Build()
 
-var SignInAuthAPIWithMissingEmail = rf.NewSignInAuthRequestBuilder().
+var SignInAuthAPIWithMissingEmail = builder.NewSignInAuthRequestBuilder().
 	WithPassword("password1").
 	Build()
 
-var SignInAuthAPIWithMissingPassword = rf.NewSignInAuthRequestBuilder().
+var SignInAuthAPIWithMissingPassword = builder.NewSignInAuthRequestBuilder().
 	WithEmail("gopher@go.com").
 	Build()
 

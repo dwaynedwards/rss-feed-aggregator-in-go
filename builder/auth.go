@@ -1,14 +1,18 @@
-package rf
+package builder
 
-import "time"
+import (
+	"time"
+
+	rf "github.com/dwaynedwards/rss-feed-aggregator-in-go"
+)
 
 type authBuilder struct {
-	auth *Auth
+	auth *rf.Auth
 }
 
 func NewAuthBuilder() *authBuilder {
 	return &authBuilder{
-		auth: &Auth{},
+		auth: &rf.Auth{},
 	}
 }
 
@@ -32,6 +36,16 @@ func (b *authBuilder) WithBasicAuth(builder *basicAuthBuilder) *authBuilder {
 	return b
 }
 
+func (b *authBuilder) AsEnabled(enabled bool) *authBuilder {
+	b.auth.Enabled = enabled
+	return b
+}
+
+func (b *authBuilder) AsDeleted(deleted bool) *authBuilder {
+	b.auth.Deleted = deleted
+	return b
+}
+
 func (b *authBuilder) WithCreatedAt(createdAt time.Time) *authBuilder {
 	b.auth.CreatedAt = createdAt
 	return b
@@ -47,17 +61,17 @@ func (b *authBuilder) WithLastSignedInAt(lastSignedInAt time.Time) *authBuilder 
 	return b
 }
 
-func (b *authBuilder) Build() *Auth {
+func (b *authBuilder) Build() *rf.Auth {
 	return b.auth
 }
 
 type basicAuthBuilder struct {
-	basicAuth *BasicAuth
+	basicAuth *rf.BasicAuth
 }
 
 func NewBasicAuthBuilder() *basicAuthBuilder {
 	return &basicAuthBuilder{
-		basicAuth: &BasicAuth{},
+		basicAuth: &rf.BasicAuth{},
 	}
 }
 
@@ -71,17 +85,17 @@ func (b *basicAuthBuilder) WithPassword(password string) *basicAuthBuilder {
 	return b
 }
 
-func (b *basicAuthBuilder) Build() *BasicAuth {
+func (b *basicAuthBuilder) Build() *rf.BasicAuth {
 	return b.basicAuth
 }
 
 type signUpAuthRequestBuilder struct {
-	signUpAuthRequest *SignUpAuthRequest
+	signUpAuthRequest *rf.SignUpAuthRequest
 }
 
 func NewSignUpAuthRequestBuilder() *signUpAuthRequestBuilder {
 	return &signUpAuthRequestBuilder{
-		signUpAuthRequest: &SignUpAuthRequest{},
+		signUpAuthRequest: &rf.SignUpAuthRequest{},
 	}
 }
 
@@ -100,17 +114,17 @@ func (b *signUpAuthRequestBuilder) WithName(name string) *signUpAuthRequestBuild
 	return b
 }
 
-func (b *signUpAuthRequestBuilder) Build() *SignUpAuthRequest {
+func (b *signUpAuthRequestBuilder) Build() *rf.SignUpAuthRequest {
 	return b.signUpAuthRequest
 }
 
 type signInAuthRequestBuilder struct {
-	signInAuthRequest *SignInAuthRequest
+	signInAuthRequest *rf.SignInAuthRequest
 }
 
 func NewSignInAuthRequestBuilder() *signInAuthRequestBuilder {
 	return &signInAuthRequestBuilder{
-		signInAuthRequest: &SignInAuthRequest{},
+		signInAuthRequest: &rf.SignInAuthRequest{},
 	}
 }
 
@@ -124,6 +138,6 @@ func (b *signInAuthRequestBuilder) WithPassword(password string) *signInAuthRequ
 	return b
 }
 
-func (b *signInAuthRequestBuilder) Build() *SignInAuthRequest {
+func (b *signInAuthRequestBuilder) Build() *rf.SignInAuthRequest {
 	return b.signInAuthRequest
 }

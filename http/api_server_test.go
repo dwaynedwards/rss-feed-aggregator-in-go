@@ -10,6 +10,7 @@ import (
 	"testing"
 
 	rf "github.com/dwaynedwards/rss-feed-aggregator-in-go"
+	"github.com/dwaynedwards/rss-feed-aggregator-in-go/builder"
 	rfhttp "github.com/dwaynedwards/rss-feed-aggregator-in-go/http"
 	"github.com/dwaynedwards/rss-feed-aggregator-in-go/service"
 	"github.com/dwaynedwards/rss-feed-aggregator-in-go/store/postgres"
@@ -38,7 +39,7 @@ func TestPostgresDBAuthServiceAPIServerIntegration(t *testing.T) {
 
 	s := makeAPIServer(postgres.NewAuthStore(container.DB))
 
-	req := rf.NewSignUpAuthRequestBuilder().
+	req := builder.NewSignUpAuthRequestBuilder().
 		WithEmail("gopher@go.com").
 		WithPassword("password1").
 		WithName("Gopher").
@@ -52,7 +53,7 @@ func TestPostgresDBAuthServiceAPIServerIntegration(t *testing.T) {
 
 	s.ServeHTTP(response, request)
 
-	req2 := rf.NewSignInAuthRequestBuilder().
+	req2 := builder.NewSignInAuthRequestBuilder().
 		WithEmail("gopher@go.com").
 		WithPassword("password1").
 		Build()

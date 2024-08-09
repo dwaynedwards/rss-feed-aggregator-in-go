@@ -4,7 +4,7 @@ import (
 	"context"
 	"testing"
 
-	rf "github.com/dwaynedwards/rss-feed-aggregator-in-go"
+	rfbuilder "github.com/dwaynedwards/rss-feed-aggregator-in-go/builder"
 	"github.com/dwaynedwards/rss-feed-aggregator-in-go/service"
 	rfpg "github.com/dwaynedwards/rss-feed-aggregator-in-go/store/postgres"
 	"github.com/dwaynedwards/rss-feed-aggregator-in-go/testcontainers"
@@ -29,9 +29,9 @@ func TestPostgresDBAuthServiceIntegration(t *testing.T) {
 	store := rfpg.NewAuthStore(container.DB)
 	service := service.NewAuthService(store)
 
-	authSignUpSuccess := rf.NewAuthBuilder().
-		WithUser(rf.NewUserBuilder().WithName("Gopher")).
-		WithBasicAuth(rf.NewBasicAuthBuilder().
+	authSignUpSuccess := rfbuilder.NewAuthBuilder().
+		WithUser(rfbuilder.NewUserBuilder().WithName("Gopher")).
+		WithBasicAuth(rfbuilder.NewBasicAuthBuilder().
 			WithEmail("gopher1@go.com").
 			WithPassword("gogopher1")).
 		Build()
@@ -46,8 +46,8 @@ func TestPostgresDBAuthServiceIntegration(t *testing.T) {
 	is.True(!authSignUpSuccess.ModifiedAt.IsZero())     // auth ModifiedAt should be set
 	is.True(!authSignUpSuccess.LastSignedInAt.IsZero()) // auth LastLoggedInAt should be set
 
-	authSignInSuccess := rf.NewAuthBuilder().
-		WithBasicAuth(rf.NewBasicAuthBuilder().
+	authSignInSuccess := rfbuilder.NewAuthBuilder().
+		WithBasicAuth(rfbuilder.NewBasicAuthBuilder().
 			WithEmail("gopher1@go.com").
 			WithPassword("gogopher1")).
 		Build()
@@ -58,9 +58,9 @@ func TestPostgresDBAuthServiceIntegration(t *testing.T) {
 	is.True(len(token) > 0)                      // should receive token
 	is.Equal(authSignInSuccess.UserID, int64(1)) // auth UserID should be 1
 
-	authSignUpFailure := rf.NewAuthBuilder().
-		WithUser(rf.NewUserBuilder().WithName("Gopher")).
-		WithBasicAuth(rf.NewBasicAuthBuilder().
+	authSignUpFailure := rfbuilder.NewAuthBuilder().
+		WithUser(rfbuilder.NewUserBuilder().WithName("Gopher")).
+		WithBasicAuth(rfbuilder.NewBasicAuthBuilder().
 			WithEmail("gopher1@go.com").
 			WithPassword("gogopher1")).
 		Build()
@@ -70,8 +70,8 @@ func TestPostgresDBAuthServiceIntegration(t *testing.T) {
 	is.True(err != nil)      // should fail to sign up with duplicate email
 	is.True(len(token) == 0) // should receive no token
 
-	authSignInEmailFailure := rf.NewAuthBuilder().
-		WithBasicAuth(rf.NewBasicAuthBuilder().
+	authSignInEmailFailure := rfbuilder.NewAuthBuilder().
+		WithBasicAuth(rfbuilder.NewBasicAuthBuilder().
 			WithEmail("gopher2@go.com").
 			WithPassword("gogopher1")).
 		Build()
@@ -81,8 +81,8 @@ func TestPostgresDBAuthServiceIntegration(t *testing.T) {
 	is.True(err != nil)      // should fail to sign in with incorrect email
 	is.True(len(token) == 0) // should receive no token
 
-	authSignInPasswordFailure := rf.NewAuthBuilder().
-		WithBasicAuth(rf.NewBasicAuthBuilder().
+	authSignInPasswordFailure := rfbuilder.NewAuthBuilder().
+		WithBasicAuth(rfbuilder.NewBasicAuthBuilder().
 			WithEmail("gopher1@go.com").
 			WithPassword("gogopher2")).
 		Build()

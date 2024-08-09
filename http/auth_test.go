@@ -12,6 +12,7 @@ import (
 
 	"github.com/alexedwards/argon2id"
 	rf "github.com/dwaynedwards/rss-feed-aggregator-in-go"
+	"github.com/dwaynedwards/rss-feed-aggregator-in-go/builder"
 	"github.com/dwaynedwards/rss-feed-aggregator-in-go/mock"
 	"github.com/matryer/is"
 )
@@ -36,7 +37,7 @@ func TestAuthAPI_SignUp_Success(t *testing.T) {
 		}
 		s := makeAPIServer(store)
 
-		req := rf.NewSignUpAuthRequestBuilder().
+		req := builder.NewSignUpAuthRequestBuilder().
 			WithEmail("gopher@go.com").
 			WithPassword("password1").
 			WithName("Gopher").
@@ -116,9 +117,9 @@ func TestAuthAPI_SignIn_Success(t *testing.T) {
 
 		store := &mock.AuthStore{
 			FindByEmailFn: func(ctx context.Context, email string) (*rf.Auth, error) {
-				auth := rf.NewAuthBuilder().
+				auth := builder.NewAuthBuilder().
 					WithUserID(1).
-					WithBasicAuth(rf.NewBasicAuthBuilder().
+					WithBasicAuth(builder.NewBasicAuthBuilder().
 						WithPassword(hashedPassword)).
 					Build()
 				return auth, nil
@@ -127,7 +128,7 @@ func TestAuthAPI_SignIn_Success(t *testing.T) {
 
 		s := makeAPIServer(store)
 
-		req := rf.NewSignInAuthRequestBuilder().
+		req := builder.NewSignInAuthRequestBuilder().
 			WithEmail("gopher@go.com").
 			WithPassword(password).
 			Build()

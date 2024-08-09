@@ -9,6 +9,7 @@ import (
 
 	"github.com/alexedwards/argon2id"
 	rf "github.com/dwaynedwards/rss-feed-aggregator-in-go"
+	"github.com/dwaynedwards/rss-feed-aggregator-in-go/builder"
 	"github.com/dwaynedwards/rss-feed-aggregator-in-go/mock"
 	"github.com/dwaynedwards/rss-feed-aggregator-in-go/service"
 	"github.com/matryer/is"
@@ -35,9 +36,9 @@ func TestAuthService_SignUp_Success(t *testing.T) {
 
 		service := service.NewAuthService(store)
 
-		auth := rf.NewAuthBuilder().
-			WithUser(rf.NewUserBuilder().WithName("Gopher")).
-			WithBasicAuth(rf.NewBasicAuthBuilder().
+		auth := builder.NewAuthBuilder().
+			WithUser(builder.NewUserBuilder().WithName("Gopher")).
+			WithBasicAuth(builder.NewBasicAuthBuilder().
 				WithEmail("gopher1@go.com").
 				WithPassword("gogopher1")).
 			Build()
@@ -98,9 +99,9 @@ func TestAuthService_SignIn_Success(t *testing.T) {
 
 		store := &mock.AuthStore{
 			FindByEmailFn: func(ctx context.Context, email string) (*rf.Auth, error) {
-				auth := rf.NewAuthBuilder().
+				auth := builder.NewAuthBuilder().
 					WithUserID(1).
-					WithBasicAuth(rf.NewBasicAuthBuilder().WithPassword(hashedPassword)).
+					WithBasicAuth(builder.NewBasicAuthBuilder().WithPassword(hashedPassword)).
 					Build()
 				return auth, nil
 			},
@@ -108,8 +109,8 @@ func TestAuthService_SignIn_Success(t *testing.T) {
 
 		service := service.NewAuthService(store)
 
-		authSignIn := rf.NewAuthBuilder().
-			WithBasicAuth(rf.NewBasicAuthBuilder().
+		authSignIn := builder.NewAuthBuilder().
+			WithBasicAuth(builder.NewBasicAuthBuilder().
 				WithEmail("gopher1@go.com").
 				WithPassword(password)).
 			Build()

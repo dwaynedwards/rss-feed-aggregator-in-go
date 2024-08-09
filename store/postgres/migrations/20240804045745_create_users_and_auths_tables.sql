@@ -1,5 +1,16 @@
 -- +goose Up
 -- +goose StatementBegin
+CREATE TABLE IF NOT EXISTS users (
+  id bigint GENERATED ALWAYS AS IDENTITY,
+  name text NOT NULL,
+  enabled boolean NOT NULL DEFAULT TRUE,
+  deleted boolean NOT NULL DEFAULT FALSE,
+  created_at timestamp NOT NULL,
+  modified_at timestamp NOT NULL,
+  CONSTRAINT pk_users PRIMARY KEY (id),
+  CONSTRAINT check_name_length CHECK (char_length(name)<=50)
+);
+
 CREATE TABLE IF NOT EXISTS auths (
   id bigint GENERATED ALWAYS AS IDENTITY,
   user_id bigint NOT NULL,
@@ -18,4 +29,6 @@ CREATE TABLE IF NOT EXISTS auths (
 -- +goose Down
 -- +goose StatementBegin
 DROP TABLE IF EXISTS auths;
+
+DROP TABLE IF EXISTS users;
 -- +goose StatementEnd

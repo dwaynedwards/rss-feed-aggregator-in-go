@@ -1,14 +1,18 @@
-package rf
+package builder
 
-import "time"
+import (
+	"time"
+
+	rf "github.com/dwaynedwards/rss-feed-aggregator-in-go"
+)
 
 type userBuilder struct {
-	user *User
+	user *rf.User
 }
 
 func NewUserBuilder() *userBuilder {
 	return &userBuilder{
-		user: &User{},
+		user: &rf.User{},
 	}
 }
 
@@ -32,6 +36,6 @@ func (b *userBuilder) WithModifiedAt(modifiedAt time.Time) *userBuilder {
 	return b
 }
 
-func (b *userBuilder) Build() *User {
+func (b *userBuilder) Build() *rf.User {
 	return b.user
 }
