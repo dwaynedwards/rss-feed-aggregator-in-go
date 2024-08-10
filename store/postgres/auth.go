@@ -18,21 +18,12 @@ func NewAuthStore(db *DB) *AuthStore {
 	}
 }
 
-func (a *AuthStore) Create(ctx context.Context, auth *rf.Auth) error {
-	tx, err := a.db.BeginTx(ctx, pgx.TxOptions{})
+func (as *AuthStore) CreateAuthAndUser(ctx context.Context, auth *rf.Auth) error {
+	tx, err := as.db.BeginTx(ctx, pgx.TxOptions{})
 	if err != nil {
 		return err
 	}
 	defer tx.Rollback(ctx)
-
-	authFound, err := a.FindByEmail(ctx, auth.BasicAuth.Email)
-	if err != nil {
-		return err
-	}
-
-	if authFound != nil {
-		return rf.AppErrorf(rf.ECInvalid, rf.EMUserExists)
-	}
 
 	user := &rf.User{
 		Name: auth.User.Name,
@@ -49,7 +40,9 @@ func (a *AuthStore) Create(ctx context.Context, auth *rf.Auth) error {
 
 	query := `
 	INSERT INTO auths (user_id, email, password, created_at, modified_at, last_signed_in_at)
-	VALUES (@userID, @email, @password, @createdAt, @modifiedAt, @lastSignedInAt) RETURNING id`
+	VALUES (@userID, @email, @password, @createdAt, @modifiedAt, @lastSignedInAt)
+	RETURNING id
+	`
 	args := pgx.NamedArgs{
 		"userID":         auth.UserID,
 		"email":          auth.BasicAuth.Email,
@@ -67,8 +60,8 @@ func (a *AuthStore) Create(ctx context.Context, auth *rf.Auth) error {
 	return tx.Commit(ctx)
 }
 
-func (a *AuthStore) FindByEmail(ctx context.Context, email string) (*rf.Auth, error) {
-	tx, err := a.db.BeginTx(ctx, pgx.TxOptions{})
+func (as *AuthStore) FindByEmail(ctx context.Context, email string) (*rf.Auth, error) {
+	tx, err := as.db.BeginTx(ctx, pgx.TxOptions{})
 	if err != nil {
 		return nil, err
 	}

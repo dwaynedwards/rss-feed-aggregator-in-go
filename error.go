@@ -30,25 +30,7 @@ func (e AppError) Error() string {
 	return msgToErrorString("app", e.Msg)
 }
 
-func NewAppError(code string, err error) *AppError {
-	return &AppError{
-		Code: code,
-		Msg:  err.Error(),
-	}
-}
-
-func BadRequestAppError(errs any) *AppError {
-	return MultiAppError(ECInvalid, errs)
-}
-
-func AppErrorf(code string, fmtstring string, args ...any) *AppError {
-	return &AppError{
-		Code: code,
-		Msg:  fmt.Sprintf(fmtstring, args...),
-	}
-}
-
-func MultiAppError(code string, errs any) *AppError {
+func NewAppError(code string, errs any) *AppError {
 	return &AppError{
 		Code: code,
 		Msg:  errs,
@@ -84,29 +66,10 @@ func (e APIError) Error() string {
 	return msgToErrorString("api", e.Msg)
 }
 
-func InternalAPIError() *APIError {
-	return MultiAPIError(http.StatusInternalServerError, "internal server error")
-}
-
-func UnprocessableRequestAPIError(errs any) *APIError {
-	return MultiAPIError(http.StatusUnprocessableEntity, errs)
-}
-
-func BadRequestAPIError(errs any) *APIError {
-	return MultiAPIError(http.StatusBadRequest, errs)
-}
-
-func MultiAPIError(statusCode int, errs any) *APIError {
+func NewAPIError(statusCode int, errs any) *APIError {
 	return &APIError{
 		StatusCode: statusCode,
 		Msg:        errs,
-	}
-}
-
-func APIErrorf(statusCode int, fmtstring string, args ...any) *APIError {
-	return &APIError{
-		StatusCode: statusCode,
-		Msg:        fmt.Sprintf(fmtstring, args...),
 	}
 }
 

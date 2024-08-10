@@ -1,6 +1,7 @@
 package rf
 
 import (
+	"fmt"
 	"os"
 	"time"
 
@@ -15,7 +16,7 @@ func GenerateAndSignJWT(userID int64, ttl time.Time) (string, error) {
 
 	tokenString, err := token.SignedString([]byte(os.Getenv("JWT_SECRET")))
 	if err != nil {
-		return "", AppErrorf(ECIntenal, "JWT generation failed: %v", err)
+		return "", NewAppError(ECIntenal, fmt.Sprintf("JWT generation failed: %v", err))
 	}
 
 	return tokenString, nil
@@ -24,25 +25,25 @@ func GenerateAndSignJWT(userID int64, ttl time.Time) (string, error) {
 func ParseAndVerifyJWT(tokenString string) (int64, error) {
 	token, err := jwt.Parse(tokenString, func(token *jwt.Token) (any, error) {
 		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
-			return nil, AppErrorf(ECIntenal, "unexpected signing method: %v", token.Header["alg"])
+			return nil, NewAppError(ECIntenal, fmt.Sprintf("unexpected signing method: %v", token.Header["alg"]))
 		}
 
 		return []byte(os.Getenv("JWT_SECRET")), nil
 	})
 	if err != nil {
-		return 0, AppErrorf(ECUnautherized, "JWT parse failed: %v", err)
+		return 0, NewAppError(ECUnautherized, fmt.Sprintf("JWT parse failed: %v", err))
 	}
 
 	claims, ok := token.Claims.(jwt.MapClaims)
 	if !ok {
-		return 0, AppErrorf(ECUnautherized, "JWT claims failed: %v", err)
+		return 0, NewAppError(ECUnautherized, fmt.Sprintf("JWT claims failed: %v", err))
 	}
 
 	ttl := int64(claims["ttl"].(float64))
 	userID := int64(claims["userID"].(float64))
 
 	if ttl < time.Now().Unix() {
-		return 0, AppErrorf(ECUnautherized, "JWT expired: %v", err)
+		return 0, NewAppError(ECUnautherized, fmt.Sprintf("JWT expired: %v", err))
 	}
 
 	return userID, nil

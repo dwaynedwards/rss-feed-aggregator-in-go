@@ -57,13 +57,13 @@ func NewPostgresTestContainer(ctx context.Context) (*PostgresTestContainer, erro
 	}, nil
 }
 
-func (c *PostgresTestContainer) Cleanup(ctx context.Context) error {
-	if err := c.migration.Reset(); err != nil {
+func (tc *PostgresTestContainer) Cleanup(ctx context.Context) error {
+	if err := tc.migration.Reset(); err != nil {
 		return err
 	}
-	if err := c.migration.Close(); err != nil {
+	if err := tc.migration.Close(); err != nil {
 		return err
 	}
 
-	return c.container.Terminate(ctx)
+	return tc.container.Terminate(ctx)
 }

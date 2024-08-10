@@ -29,7 +29,7 @@ audit:
 	@go mod verify
 	@go vet ./...
 	@go run honnef.co/go/tools/cmd/staticcheck@latest -checks=all,-ST1000,-U1000 ./...
-	@go run golang.org/x/vuln/cmd/govulncheck@latest ./...
+	@go run golang.org/x/vuln/cmd/govulncheck@latest -show verbose ./...
 	@go test -race -buildvcs -vet=off ./...
 
 ## test: run all tests
@@ -38,9 +38,9 @@ test:
 	@go clean -testcache && go test -race -buildvcs ./...
 
 ## test: run all tests
-.PHONY: test-short
-test-short:
-	@go clean -testcache && go test -race -buildvcs -short ./...
+.PHONY: test-base
+test-base:
+	@go clean -testcache && go test ./...
 
 ## test-v: run all tests
 .PHONY: test-v
@@ -53,12 +53,17 @@ test-cover:
 	@go test -race -buildvcs -coverprofile=/tmp/coverage.out ./...
 	@go tool cover -html=/tmp/coverage.out
 
+# docker-up: spins up docker container
+.PHONY: docker-up
+docker-up:
+	@docker compose up -d
+
 # db-status: gets the migration status of the db
 .PHONY: db-status
 db-status:
 	@goose -dir ${MIGRATIONS_PATH} ${DRIVER} ${DBSTRING} status
 
-# db-status: migrates up the db
+# db-up: migrates up the db
 .PHONY: db-up
 db-up:
 	@goose -dir ${MIGRATIONS_PATH} ${DRIVER} ${DBSTRING} up

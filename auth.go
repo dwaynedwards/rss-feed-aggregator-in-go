@@ -5,19 +5,30 @@ import (
 	"time"
 )
 
+type AuthStore interface {
+	CreateAuthAndUser(ctx context.Context, auth *Auth) error
+	FindByEmail(ctx context.Context, email string) (*Auth, error)
+}
+
+type AuthService interface {
+	SignUp(ctx context.Context, auth *Auth) (string, error)
+	SignIn(ctx context.Context, auth *Auth) (string, error)
+}
+
 type Auth struct {
-	ID int64 `json:"id"`
+	ID             int64     `json:"id"`
+	Enabled        bool      `json:"enabled"`
+	Deleted        bool      `json:"deleted"`
+	CreatedAt      time.Time `json:"createdAt"`
+	ModifiedAt     time.Time `json:"modifiedAt"`
+	LastSignedInAt time.Time `json:"lastSignedInAt"`
 
 	UserID int64 `json:"userID"`
 	User   *User `json:"user"`
 
 	BasicAuth *BasicAuth `json:"basicAuth"`
 
-	Enabled        bool      `json:"enabled"`
-	Deleted        bool      `json:"deleted"`
-	CreatedAt      time.Time `json:"createdAt"`
-	ModifiedAt     time.Time `json:"modifiedAt"`
-	LastSignedInAt time.Time `json:"lastSignedInAt"`
+	Token string `json:"token"`
 }
 
 type BasicAuth struct {
@@ -42,14 +53,4 @@ type SignInAuthRequest struct {
 
 type SignInAuthResponse struct {
 	Token string `json:"token"`
-}
-
-type AuthStore interface {
-	Create(ctx context.Context, auth *Auth) error
-	FindByEmail(ctx context.Context, email string) (*Auth, error)
-}
-
-type AuthService interface {
-	SignUp(ctx context.Context, auth *Auth) (string, error)
-	SignIn(ctx context.Context, auth *Auth) (string, error)
 }

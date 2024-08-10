@@ -2,9 +2,7 @@
 -- +goose StatementBegin
 CREATE TABLE IF NOT EXISTS users (
   id bigint GENERATED ALWAYS AS IDENTITY,
-  name text NOT NULL,
-  enabled boolean NOT NULL DEFAULT TRUE,
-  deleted boolean NOT NULL DEFAULT FALSE,
+  name text NOT NULL, 
   created_at timestamp NOT NULL,
   modified_at timestamp NOT NULL,
   CONSTRAINT pk_users PRIMARY KEY (id),
@@ -16,6 +14,8 @@ CREATE TABLE IF NOT EXISTS auths (
   user_id bigint NOT NULL,
   email text NOT NULL,
   password text NOT NULL,
+  enabled boolean NOT NULL DEFAULT TRUE,
+  deleted boolean NOT NULL DEFAULT FALSE,
   created_at timestamp NOT NULL,
   modified_at timestamp NOT NULL,
   last_signed_in_at timestamp NOT NULL,

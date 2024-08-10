@@ -12,18 +12,14 @@ type Migration struct {
 	db *sql.DB
 }
 
-func NewMigration(dialect string, db *sql.DB, embedMigrations embed.FS, printNoop bool) (*Migration, error) {
+func NewMigration(db *sql.DB, embedMigrations embed.FS, printLog bool) (*Migration, error) {
 	if db == nil {
 		return &Migration{}, errors.New("db is nil")
 	}
 
 	goose.SetBaseFS(embedMigrations)
-	if !printNoop {
+	if !printLog {
 		goose.SetLogger(goose.NopLogger())
-	}
-
-	if err := goose.SetDialect(dialect); err != nil {
-		return &Migration{}, err
 	}
 
 	return &Migration{db: db}, nil

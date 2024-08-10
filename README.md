@@ -5,8 +5,8 @@
 A RSS feed aggregator that supports (when feature complete - WIP):
 
 - Signup/Signin for a user account
-- Add/Remove RSS urls
-- Browse RSS feels that other users have added
+- Add/Remove RSS feed urls
+- Browse RSS feeds channels that other users have added
 
 Learning outcomes:
 
@@ -15,3 +15,4 @@ Learning outcomes:
 - Context
 - gRPC
 - Websockets
+- RabbitMQ vs Kafka

@@ -64,7 +64,7 @@ func getSignUpAuth(w http.ResponseWriter, r *http.Request) (*rf.Auth, error) {
 	var req *rf.SignUpAuthRequest
 
 	if err := decodeJSON(w, r, &req); err != nil {
-		return nil, rf.UnprocessableRequestAPIError(err)
+		return nil, rf.NewAPIError(http.StatusUnprocessableEntity, err)
 	}
 
 	if err := validateSignUpRequest(req); err != nil {
@@ -96,7 +96,7 @@ func validateSignUpRequest(req *rf.SignUpAuthRequest) error {
 	}
 
 	if len(errs) > 0 {
-		return rf.BadRequestAPIError(errs)
+		return rf.NewAPIError(http.StatusBadRequest, errs)
 	}
 
 	return nil
@@ -106,7 +106,7 @@ func getSignInAuth(w http.ResponseWriter, r *http.Request) (*rf.Auth, error) {
 	var req *rf.SignInAuthRequest
 
 	if err := decodeJSON(w, r, &req); err != nil {
-		return nil, rf.UnprocessableRequestAPIError(err)
+		return nil, rf.NewAPIError(http.StatusUnprocessableEntity, err)
 	}
 
 	if err := validateSigninRequest(req); err != nil {
@@ -132,7 +132,7 @@ func validateSigninRequest(req *rf.SignInAuthRequest) error {
 	}
 
 	if len(errs) > 0 {
-		return rf.BadRequestAPIError(errs)
+		return rf.NewAPIError(http.StatusBadRequest, errs)
 	}
 
 	return nil

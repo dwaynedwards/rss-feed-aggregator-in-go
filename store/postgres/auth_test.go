@@ -26,8 +26,8 @@ func TestPostgresDBAuthServiceIntegration(t *testing.T) {
 		is.NoErr(err) // failed to terminate pgContainer
 	})
 
-	store := rfpg.NewAuthStore(container.DB)
-	service := service.NewAuthService(store)
+	authStore := rfpg.NewAuthStore(container.DB)
+	authService := service.NewAuthService(authStore)
 
 	authSignUpSuccess := rfbuilder.NewAuthBuilder().
 		WithUser(rfbuilder.NewUserBuilder().WithName("Gopher")).
@@ -36,7 +36,7 @@ func TestPostgresDBAuthServiceIntegration(t *testing.T) {
 			WithPassword("gogopher1")).
 		Build()
 
-	token, err := service.SignUp(ctx, authSignUpSuccess)
+	token, err := authService.SignUp(ctx, authSignUpSuccess)
 
 	is.NoErr(err)                                       // should sign up
 	is.True(len(token) > 0)                             // should receive token
@@ -52,7 +52,7 @@ func TestPostgresDBAuthServiceIntegration(t *testing.T) {
 			WithPassword("gogopher1")).
 		Build()
 
-	token, err = service.SignIn(ctx, authSignInSuccess)
+	token, err = authService.SignIn(ctx, authSignInSuccess)
 
 	is.NoErr(err)                                // should sign in
 	is.True(len(token) > 0)                      // should receive token
@@ -65,7 +65,7 @@ func TestPostgresDBAuthServiceIntegration(t *testing.T) {
 			WithPassword("gogopher1")).
 		Build()
 
-	token, err = service.SignUp(ctx, authSignUpFailure)
+	token, err = authService.SignUp(ctx, authSignUpFailure)
 
 	is.True(err != nil)      // should fail to sign up with duplicate email
 	is.True(len(token) == 0) // should receive no token
@@ -76,7 +76,7 @@ func TestPostgresDBAuthServiceIntegration(t *testing.T) {
 			WithPassword("gogopher1")).
 		Build()
 
-	token, err = service.SignIn(ctx, authSignInEmailFailure)
+	token, err = authService.SignIn(ctx, authSignInEmailFailure)
 
 	is.True(err != nil)      // should fail to sign in with incorrect email
 	is.True(len(token) == 0) // should receive no token
@@ -87,7 +87,7 @@ func TestPostgresDBAuthServiceIntegration(t *testing.T) {
 			WithPassword("gogopher2")).
 		Build()
 
-	token, err = service.SignIn(ctx, authSignInPasswordFailure)
+	token, err = authService.SignIn(ctx, authSignInPasswordFailure)
 
 	is.True(err != nil)      // should fail to sign in with incorrect email
 	is.True(len(token) == 0) // should receive no token

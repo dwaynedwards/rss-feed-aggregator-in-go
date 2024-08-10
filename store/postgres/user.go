@@ -7,7 +7,15 @@ import (
 	"github.com/jackc/pgx/v5"
 )
 
-type UserStore struct{}
+type UserStore struct {
+	db *DB
+}
+
+func NewUserStore(db *DB) *UserStore {
+	return &UserStore{
+		db: db,
+	}
+}
 
 func createUser(ctx context.Context, tx *Tx, user *rf.User) error {
 	user.CreatedAt = tx.now
@@ -16,7 +24,8 @@ func createUser(ctx context.Context, tx *Tx, user *rf.User) error {
 	query := `
   INSERT INTO users (name, created_at, modified_at)
   VALUES (@name, @createdAt, @modifiedAt)
-  RETURNING id`
+  RETURNING id
+	`
 	args := pgx.NamedArgs{
 		"name":       user.Name,
 		"createdAt":  user.CreatedAt,

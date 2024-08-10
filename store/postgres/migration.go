@@ -11,5 +11,5 @@ import (
 var embedMigrations embed.FS
 
 func NewMigration(db *DB, printNoop bool) (*rf.Migration, error) {
-	return rf.NewMigration("postgres", stdlib.OpenDBFromPool(db.db), embedMigrations, printNoop)
+	return rf.NewMigration(stdlib.OpenDBFromPool(db.db), embedMigrations, printNoop)
 }

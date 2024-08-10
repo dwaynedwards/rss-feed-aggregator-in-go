@@ -26,13 +26,16 @@ func TestAuthAPI_SignUp_Success(t *testing.T) {
 		t.Parallel()
 
 		store := &mock.AuthStore{
-			CreateFn: func(ctx context.Context, auth *rf.Auth) error {
+			CreateAuthAndUserFn: func(ctx context.Context, auth *rf.Auth) error {
 				auth.ID = 1
 				auth.UserID = 1
 				auth.CreatedAt = time.Now()
 				auth.ModifiedAt = time.Now()
 				auth.LastSignedInAt = time.Now()
 				return nil
+			},
+			FindByEmailFn: func(ctx context.Context, email string) (*rf.Auth, error) {
+				return nil, nil
 			},
 		}
 		s := makeAPIServer(store)

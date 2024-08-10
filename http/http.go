@@ -21,7 +21,7 @@ func makeHTTPHandlerFunc(h APIFunc) http.HandlerFunc {
 			if errors.As(err, &apiError) {
 				writeJSON(w, apiError.StatusCode, apiError)
 			} else {
-				errRes := rf.InternalAPIError()
+				errRes := rf.NewAPIError(http.StatusInternalServerError, "internal server error")
 				writeJSON(w, errRes.StatusCode, errRes)
 			}
 			slog.Error("HTTP API error", "err", err.Error(), "path", r.URL.Path)

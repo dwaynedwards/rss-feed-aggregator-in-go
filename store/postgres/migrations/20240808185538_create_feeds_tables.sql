@@ -34,7 +34,6 @@ CREATE TABLE IF NOT EXISTS feed_channels (
   link text NOT NULL,
   created_at timestamp NOT NULL,
   modified_at timestamp NOT NULL,
-  last_signed_in_at timestamp NOT NULL,
   CONSTRAINT pk_feed_channels PRIMARY KEY (id),
   CONSTRAINT fk_feed FOREIGN KEY (feed_id) REFERENCES feeds (id) ON DELETE CASCADE
 );
@@ -47,7 +46,6 @@ CREATE TABLE IF NOT EXISTS feed_channel_items (
   link text NOT NULL,
   created_at timestamp NOT NULL,
   modified_at timestamp NOT NULL,
-  last_signed_in_at timestamp NOT NULL,
   CONSTRAINT pk_feed_channel_items PRIMARY KEY (id),
   CONSTRAINT fk_feed_channel FOREIGN KEY (feed_channel_id) REFERENCES feed_channels (id) ON DELETE CASCADE
 );

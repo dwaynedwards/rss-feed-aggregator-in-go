@@ -17,20 +17,22 @@ import (
 
 func TestAuthService_SignUp_Success(t *testing.T) {
 	t.Parallel()
-
 	is := is.New(t)
 
 	t.Run("Should succeed with sign up", func(t *testing.T) {
 		t.Parallel()
 
 		store := &mock.AuthStore{
-			CreateFn: func(ctx context.Context, auth *rf.Auth) error {
+			CreateAuthAndUserFn: func(ctx context.Context, auth *rf.Auth) error {
 				auth.ID = 1
 				auth.UserID = 1
 				auth.CreatedAt = time.Now()
 				auth.ModifiedAt = time.Now()
 				auth.LastSignedInAt = time.Now()
 				return nil
+			},
+			FindByEmailFn: func(ctx context.Context, email string) (*rf.Auth, error) {
+				return nil, nil
 			},
 		}
 
@@ -53,13 +55,12 @@ func TestAuthService_SignUp_Success(t *testing.T) {
 		is.True(!auth.ModifiedAt.IsZero())     // auth ModifiedAt should be set
 		is.True(!auth.LastSignedInAt.IsZero()) // auth LastLoggedInAt should be set
 		is.True(store.CreateInvoked)           // auth store Create should have been invoked
-		is.True(!store.FindByEmailInvoked)     // auth store FindByEmail should not have been invoked
+		is.True(store.FindByEmailInvoked)      // auth store FindByEmail should have been invoked
 	})
 }
 
 func TestAuthService_SignUp_Failure(t *testing.T) {
 	t.Parallel()
-
 	is := is.New(t)
 
 	signUpFailureCases := []mock.AuthFailureCase{
@@ -87,7 +88,6 @@ func TestAuthService_SignUp_Failure(t *testing.T) {
 
 func TestAuthService_SignIn_Success(t *testing.T) {
 	t.Parallel()
-
 	is := is.New(t)
 
 	t.Run("Should succeed with sign in", func(t *testing.T) {
@@ -127,7 +127,6 @@ func TestAuthService_SignIn_Success(t *testing.T) {
 
 func TestAuthService_SignIn_Failure(t *testing.T) {
 	t.Parallel()
-
 	is := is.New(t)
 
 	signUpFailureCases := []mock.AuthFailureCase{

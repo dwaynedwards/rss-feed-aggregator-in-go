@@ -61,35 +61,18 @@ var SignInAuthAPIWithMissingPassword = builder.NewSignInAuthRequestBuilder().
 	Build()
 
 type AuthStore struct {
-	CreateFn           func(ctx context.Context, auth *rf.Auth) error
-	CreateInvoked      bool
-	FindByEmailFn      func(ctx context.Context, email string) (*rf.Auth, error)
-	FindByEmailInvoked bool
+	CreateAuthAndUserFn func(ctx context.Context, auth *rf.Auth) error
+	CreateInvoked       bool
+	FindByEmailFn       func(ctx context.Context, email string) (*rf.Auth, error)
+	FindByEmailInvoked  bool
 }
 
-func (a *AuthStore) Create(ctx context.Context, auth *rf.Auth) error {
-	a.CreateInvoked = true
-	return a.CreateFn(ctx, auth)
+func (as *AuthStore) CreateAuthAndUser(ctx context.Context, auth *rf.Auth) error {
+	as.CreateInvoked = true
+	return as.CreateAuthAndUserFn(ctx, auth)
 }
 
-func (a *AuthStore) FindByEmail(ctx context.Context, email string) (*rf.Auth, error) {
-	a.FindByEmailInvoked = true
-	return a.FindByEmailFn(ctx, email)
-}
-
-type AuthService struct {
-	SignUpFn      func(ctx context.Context, auth *rf.Auth) error
-	SignUpInvoked bool
-	SignInFn      func(ctx context.Context, id int64) error
-	SignInInvoked bool
-}
-
-func (a *AuthService) SignUp(ctx context.Context, auth *rf.Auth) error {
-	a.SignUpInvoked = true
-	return a.SignUpFn(ctx, auth)
-}
-
-func (a *AuthService) SignIn(ctx context.Context, id int64) error {
-	a.SignInInvoked = true
-	return a.SignInFn(ctx, id)
+func (as *AuthStore) FindByEmail(ctx context.Context, email string) (*rf.Auth, error) {
+	as.FindByEmailInvoked = true
+	return as.FindByEmailFn(ctx, email)
 }

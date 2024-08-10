@@ -2,9 +2,9 @@ package postgres
 
 import (
 	"context"
-	"fmt"
 	"time"
 
+	rf "github.com/dwaynedwards/rss-feed-aggregator-in-go"
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
 )
@@ -29,7 +29,7 @@ func NewDB(dbURL string) *DB {
 
 func (db *DB) Open() (err error) {
 	if db.DBURL == "" {
-		return fmt.Errorf("dsn required")
+		return rf.NewAppError(rf.ECIntenal, "db url required")
 	}
 
 	if db.db, err = pgxpool.New(db.ctx, db.DBURL); err != nil {
