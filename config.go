@@ -6,17 +6,23 @@ import (
 	"strings"
 )
 
+type config struct {
+	DatabaseURL string
+	APIPort     string
+	JWTSecret   string
+}
+
+var Config config
+
 //go:embed *.env*
 var embededEnvFile embed.FS
 
-var noop = newEnv()
-
-func newEnv() bool {
+func init() {
 	file, err := embededEnvFile.ReadFile(".env")
 	if err != nil {
 		file, err = embededEnvFile.ReadFile(".env.example")
 		if err != nil {
-			return false
+			return
 		}
 	}
 
@@ -36,5 +42,10 @@ func newEnv() bool {
 		}
 		os.Setenv(key, strings.ReplaceAll(val, "\"", ""))
 	}
-	return true
+
+	Config = config{
+		DatabaseURL: os.Getenv("DATABASE_URL"),
+		APIPort:     os.Getenv("API_PORT"),
+		JWTSecret:   os.Getenv("JWT_SECRET"),
+	}
 }

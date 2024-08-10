@@ -4,7 +4,6 @@ import (
 	"context"
 	"net"
 	"net/http"
-	"os"
 	"time"
 
 	rf "github.com/dwaynedwards/rss-feed-aggregator-in-go"
@@ -32,7 +31,7 @@ func NewAPIServer() *APIServer {
 }
 
 func (s *APIServer) Open() (err error) {
-	if s.listener, err = net.Listen("tcp", ":"+os.Getenv("API_PORT")); err != nil {
+	if s.listener, err = net.Listen("tcp", ":"+rf.Config.APIPort); err != nil {
 		return err
 	}
 

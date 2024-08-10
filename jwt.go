@@ -2,7 +2,6 @@ package rf
 
 import (
 	"fmt"
-	"os"
 	"time"
 
 	"github.com/golang-jwt/jwt/v5"
@@ -14,7 +13,7 @@ func GenerateAndSignJWT(userID int64, ttl time.Time) (string, error) {
 		"ttl":    ttl.Unix(),
 	})
 
-	tokenString, err := token.SignedString([]byte(os.Getenv("JWT_SECRET")))
+	tokenString, err := token.SignedString([]byte(Config.JWTSecret))
 	if err != nil {
 		return "", NewAppError(ECIntenal, fmt.Sprintf("JWT generation failed: %v", err))
 	}
@@ -28,7 +27,7 @@ func ParseAndVerifyJWT(tokenString string) (int64, error) {
 			return nil, NewAppError(ECIntenal, fmt.Sprintf("unexpected signing method: %v", token.Header["alg"]))
 		}
 
-		return []byte(os.Getenv("JWT_SECRET")), nil
+		return []byte(Config.JWTSecret), nil
 	})
 	if err != nil {
 		return 0, NewAppError(ECUnautherized, fmt.Sprintf("JWT parse failed: %v", err))
