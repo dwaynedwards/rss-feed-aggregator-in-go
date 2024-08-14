@@ -45,7 +45,7 @@ func TestAuthAPI_SignUp_Success(t *testing.T) {
 			WithPassword("password1").
 			WithName("Gopher").
 			Build()
-		body := jsonBodyReaderFromStruct(is, req)
+		body := structToJSONReader(is, req)
 
 		request, err := http.NewRequest(http.MethodPost, "/api/v1/auths/signup", body)
 		is.NoErr(err) // should be a successful request
@@ -55,12 +55,6 @@ func TestAuthAPI_SignUp_Success(t *testing.T) {
 		s.ServeHTTP(response, request)
 
 		is.Equal(response.Code, http.StatusCreated) // should sign up user account with a 201 response
-
-		var got rf.SignUpAuthResponse
-		err = json.NewDecoder(response.Body).Decode(&got)
-
-		is.NoErr(err)               // should have a response
-		is.True(len(got.Token) > 0) // should have a token
 	})
 }
 
@@ -81,7 +75,7 @@ func TestAuthService_SignUp_Failure(t *testing.T) {
 			store := &mock.AuthStore{}
 			s := makeAPIServer(store)
 
-			body := jsonBodyReaderFromStruct(is, tc.AuthReq)
+			body := structToJSONReader(is, tc.AuthReq)
 
 			request, err := http.NewRequest(http.MethodPost, "/api/v1/auths/signup", body)
 			is.NoErr(err) // should be a successful request
@@ -135,7 +129,7 @@ func TestAuthAPI_SignIn_Success(t *testing.T) {
 			WithEmail("gopher@go.com").
 			WithPassword(password).
 			Build()
-		body := jsonBodyReaderFromStruct(is, req)
+		body := structToJSONReader(is, req)
 
 		request, err := http.NewRequest(http.MethodPost, "/api/v1/auths/signin", body)
 		is.NoErr(err) // should be a successful request
@@ -145,12 +139,6 @@ func TestAuthAPI_SignIn_Success(t *testing.T) {
 		s.ServeHTTP(response, request)
 
 		is.Equal(response.Code, http.StatusOK) // should sign in a user account with a 200 response
-
-		var got rf.SignInAuthResponse
-		err = json.NewDecoder(response.Body).Decode(&got)
-
-		is.NoErr(err)               // should have a response
-		is.True(len(got.Token) > 0) // should have a token
 	})
 }
 
@@ -170,7 +158,7 @@ func TestAuthService_SignIn_Failure(t *testing.T) {
 			store := &mock.AuthStore{}
 			s := makeAPIServer(store)
 
-			body := jsonBodyReaderFromStruct(is, tc.AuthReq)
+			body := structToJSONReader(is, tc.AuthReq)
 
 			request, err := http.NewRequest(http.MethodPost, "/api/v1/auths/signin", body)
 			is.NoErr(err) // should be a successful request

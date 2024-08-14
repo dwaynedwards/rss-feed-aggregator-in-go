@@ -26,12 +26,12 @@ func (as *AuthService) SignUp(ctx context.Context, auth *rf.Auth) (string, error
 		return "", err
 	}
 
-	err := rf.RunStateMachine(ctx, args, canSignUpCheckState)
+	result, err := rf.RunStateMachine(ctx, args, canSignUpCheckState)
 	if err != nil {
 		return "", err
 	}
 
-	return auth.Token, nil
+	return result.auth.Token, nil
 }
 
 func (as *AuthService) SignIn(ctx context.Context, auth *rf.Auth) (string, error) {
@@ -44,10 +44,10 @@ func (as *AuthService) SignIn(ctx context.Context, auth *rf.Auth) (string, error
 		return "", err
 	}
 
-	err := rf.RunStateMachine(ctx, args, canSignInCheckState)
+	result, err := rf.RunStateMachine(ctx, args, canSignInCheckState)
 	if err != nil {
 		return "", err
 	}
 
-	return auth.Token, nil
+	return result.auth.Token, nil
 }

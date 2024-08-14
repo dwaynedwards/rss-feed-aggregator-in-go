@@ -9,12 +9,12 @@ DBSTRING := "postgres://postgres:postgres@localhost:5432/rss_feeds?sslmode=disab
 
 ## build: build the api
 .PHONY: build-api
-build:
+build-api:
 	@go build -o=/tmp/${PROJECT_NAME}/bin/${BINARY_NAME}-api ${API_PACKAGE_PATH}
 
 ## run: run the api
 .PHONY: run-api
-run: build-api
+run-api: build-api
 	@/tmp/${PROJECT_NAME}/bin/${BINARY_NAME}-api
 
 ## tidy: format code and tidy modfile 

@@ -17,8 +17,10 @@ const (
 	EMEmailRequired     = "email required."
 	EMPasswordRequired  = "password required."
 	EMNameRequired      = "name required."
+	EMURLRequired       = "url required."
 	EMUserExists        = "user exists."
 	EMInvlidCredentials = "invalid email and/or password was provided."
+	EMUnauthorized      = "unauthorized to perform this action."
 )
 
 type AppError struct {

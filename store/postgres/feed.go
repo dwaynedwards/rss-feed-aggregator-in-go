@@ -151,3 +151,7 @@ func (fs *FeedStore) FindUserFeedByID(ctx context.Context, userID, feedID int64)
 func (fs *FeedStore) FindByURL(ctx context.Context, url string) (*rf.Feed, error) {
 	return nil, nil
 }
+
+func (fs *FeedStore) DeleteFeed(ctx context.Context, userID, feedID int64) error {
+	return nil
+}

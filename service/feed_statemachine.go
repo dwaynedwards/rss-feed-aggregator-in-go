@@ -17,7 +17,7 @@ func (fs FeedArgs) validateAddFeed() error {
 	}
 
 	if fs.feed == nil || fs.feed.URL == "" {
-		return rf.NewAppError(rf.ECInvalid, "feed cannot be nil")
+		return rf.NewAppError(rf.ECInvalid, rf.EMURLRequired)
 	}
 
 	return nil

@@ -21,8 +21,18 @@ func TestPostgresDBAuthServiceIntegration(t *testing.T) {
 	container, err := testcontainers.NewPostgresTestContainer(ctx)
 	is.NoErr(err)
 
+	migration, err := rfpg.NewPostgresMigration(container.DB, "migrations")
+	is.NoErr(err)
+
+	migration.Up()
+	is.NoErr(err)
+
 	t.Cleanup(func() {
-		err := container.Cleanup(ctx)
+		err := migration.Reset()
+		is.NoErr(err)
+		err = migration.Close()
+		is.NoErr(err)
+		err = container.Cleanup(ctx)
 		is.NoErr(err) // failed to terminate pgContainer
 	})
 

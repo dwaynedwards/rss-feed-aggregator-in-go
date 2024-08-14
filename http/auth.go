@@ -24,11 +24,19 @@ func (s *APIServer) handleAuthSignUp() APIFunc {
 			return err
 		}
 
-		res := &rf.SignUpAuthResponse{
-			Token: token,
+		cookie := http.Cookie{
+			Name:     "token",
+			Value:    token,
+			Path:     "/",
+			MaxAge:   3600,
+			HttpOnly: true,
+			Secure:   false,
+			SameSite: http.SameSiteLaxMode,
 		}
 
-		err = writeJSON(w, http.StatusCreated, res)
+		rf.Write(w, cookie)
+
+		err = writeJSON(w, http.StatusCreated, nil)
 		if err != nil {
 			return err
 		}
@@ -48,11 +56,19 @@ func (s *APIServer) handleAuthSignIn() APIFunc {
 			return err
 		}
 
-		res := &rf.SignUpAuthResponse{
-			Token: token,
+		cookie := http.Cookie{
+			Name:     "token",
+			Value:    token,
+			Path:     "/",
+			MaxAge:   3600,
+			HttpOnly: true,
+			Secure:   false,
+			SameSite: http.SameSiteLaxMode,
 		}
 
-		err = writeJSON(w, http.StatusOK, res)
+		rf.Write(w, cookie)
+
+		err = writeJSON(w, http.StatusOK, nil)
 		if err != nil {
 			return err
 		}

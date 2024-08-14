@@ -43,9 +43,10 @@ func (db *DB) Open() (err error) {
 	return nil
 }
 
-func (db *DB) Close() {
+func (db *DB) Close() error {
 	db.cancel()
 	db.db.Close()
+	return nil
 }
 
 func (db *DB) BeginTx(ctx context.Context, opts pgx.TxOptions) (*Tx, error) {

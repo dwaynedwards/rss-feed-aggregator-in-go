@@ -2,9 +2,9 @@ package service
 
 import (
 	"context"
-	"errors"
 
 	rf "github.com/dwaynedwards/rss-feed-aggregator-in-go"
+	"github.com/dwaynedwards/rss-feed-aggregator-in-go/builder"
 )
 
 type FeedService struct {
@@ -17,7 +17,15 @@ func NewFeedService(store rf.FeedStore) *FeedService {
 	}
 }
 
-func (fs *FeedService) AddFeed(ctx context.Context, feed *rf.Feed) (int64, error) {
+func (fs *FeedService) AddFeed(ctx context.Context, req *rf.AddFeedRequest) (int64, error) {
+	userID := rf.UserIDFromContext(ctx)
+
+	feed := builder.NewFeedBuilder().
+		WithName(req.Name).
+		WithURL(req.URL).
+		WithUserID(userID).
+		Build()
+
 	args := FeedArgs{
 		store: fs.store,
 		feed:  feed,
@@ -27,28 +35,39 @@ func (fs *FeedService) AddFeed(ctx context.Context, feed *rf.Feed) (int64, error
 		return 0, err
 	}
 
-	err := rf.RunStateMachine(ctx, args, addFeedState)
+	result, err := rf.RunStateMachine(ctx, args, addFeedState)
 	if err != nil {
 		return 0, err
 	}
 
-	return feed.ID, nil
+	return result.feed.ID, nil
 }
 
-func (fs *FeedService) RemoveFeed(ctx context.Context, feed *rf.Feed) error {
-	return errors.New("remove err")
+func (fs *FeedService) RemoveFeed(ctx context.Context, feedID int64) error {
+	userID := rf.UserIDFromContext(ctx)
+
+	err := fs.store.DeleteFeed(ctx, userID, feedID)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
 
-func (fs *FeedService) GetFeeds(ctx context.Context, feed *rf.Feed) ([]rf.Feed, error) {
-	foundFeeds, err := fs.store.ListUserFeeds(ctx, feed.UserID)
+func (fs *FeedService) GetFeeds(ctx context.Context) ([]rf.Feed, error) {
+	userID := rf.UserIDFromContext(ctx)
+
+	foundFeeds, err := fs.store.ListUserFeeds(ctx, userID)
 	if err != nil {
 		return nil, err
 	}
 	return foundFeeds, nil
 }
 
-func (fs *FeedService) GetFeed(ctx context.Context, feed *rf.Feed) (*rf.Feed, error) {
-	foundFeed, err := fs.store.FindUserFeedByID(ctx, feed.UserID, feed.ID)
+func (fs *FeedService) GetFeed(ctx context.Context, feedID int64) (*rf.Feed, error) {
+	userID := rf.UserIDFromContext(ctx)
+
+	foundFeed, err := fs.store.FindUserFeedByID(ctx, userID, feedID)
 	if err != nil {
 		return nil, err
 	}

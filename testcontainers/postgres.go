@@ -4,7 +4,6 @@ import (
 	"context"
 	"time"
 
-	rf "github.com/dwaynedwards/rss-feed-aggregator-in-go"
 	rfpg "github.com/dwaynedwards/rss-feed-aggregator-in-go/store/postgres"
 	"github.com/testcontainers/testcontainers-go"
 	"github.com/testcontainers/testcontainers-go/modules/postgres"
@@ -14,7 +13,6 @@ import (
 type PostgresTestContainer struct {
 	DB        *rfpg.DB
 	container testcontainers.Container
-	migration *rf.Migration
 }
 
 func NewPostgresTestContainer(ctx context.Context) (*PostgresTestContainer, error) {
@@ -41,27 +39,14 @@ func NewPostgresTestContainer(ctx context.Context) (*PostgresTestContainer, erro
 		return nil, err
 	}
 
-	migration, err := rfpg.NewMigration(db, false)
-	if err != nil {
-		return nil, err
-	}
-
-	if err := migration.Up(); err != nil {
-		return nil, err
-	}
-
 	return &PostgresTestContainer{
 		DB:        db,
 		container: container,
-		migration: migration,
 	}, nil
 }
 
 func (tc *PostgresTestContainer) Cleanup(ctx context.Context) error {
-	if err := tc.migration.Reset(); err != nil {
-		return err
-	}
-	if err := tc.migration.Close(); err != nil {
+	if err := tc.DB.Close(); err != nil {
 		return err
 	}
 

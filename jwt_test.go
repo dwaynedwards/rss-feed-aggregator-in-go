@@ -13,19 +13,19 @@ func TestJWT(t *testing.T) {
 
 	is := is.New(t)
 
-	token, err := rf.GenerateAndSignJWT(1, time.Now())
+	token, err := rf.GenerateAndSignUserIDJWT(1, time.Now())
 	is.NoErr(err)
 	is.True(len(token) > 0)
 
-	userID, err := rf.ParseAndVerifyJWT(token)
+	userID, err := rf.ParseAndVerifyUserIDJWT(token)
 	is.NoErr(err)
 	is.Equal(userID, int64(userID))
 
-	token, err = rf.GenerateAndSignJWT(1, time.Now().Add(time.Minute*-1))
+	token, err = rf.GenerateAndSignUserIDJWT(1, time.Now().Add(time.Minute*-1))
 	is.NoErr(err)
 	is.True(len(token) > 0)
 
-	_, err = rf.ParseAndVerifyJWT(token)
+	_, err = rf.ParseAndVerifyUserIDJWT(token)
 	is.True(err != nil)                               // should error from token expiration
 	is.Equal(rf.AppErrorCode(err), rf.ECUnautherized) // shoud have error code
 }

@@ -22,8 +22,18 @@ func TestPostgresDBFeedServiceIntegration(t *testing.T) {
 	container, err := testcontainers.NewPostgresTestContainer(ctx)
 	is.NoErr(err)
 
+	migration, err := rfpg.NewPostgresMigration(container.DB, "migrations")
+	is.NoErr(err)
+
+	migration.Up()
+	is.NoErr(err)
+
 	t.Cleanup(func() {
-		err := container.Cleanup(ctx)
+		err := migration.Reset()
+		is.NoErr(err)
+		err = migration.Close()
+		is.NoErr(err)
+		err = container.Cleanup(ctx)
 		is.NoErr(err) // failed to terminate pgContainer
 	})
 
@@ -46,42 +56,32 @@ func TestPostgresDBFeedServiceIntegration(t *testing.T) {
 
 	userID := auth.UserID
 
-	feedGetFeedsWithNoFeedsSuccess := &rf.Feed{
-		UserID: userID,
-	}
-	feeds, err := feedService.GetFeeds(ctx, feedGetFeedsWithNoFeedsSuccess)
+	ctxWithUserID := rf.SetUserIDToContext(ctx, userID)
+	feeds, err := feedService.GetFeeds(ctxWithUserID)
 
 	is.NoErr(err)           // should have no errors when no feeds are found
 	is.Equal(len(feeds), 0) // should find no feeds
 
 	feedName := "The Gopher Podcast"
 	feedURL := "http://feed.com/rss"
-	feedAddSuccess := rfbuilder.NewFeedBuilder().
-		WithUserID(userID).
+	feedAddSuccess := rfbuilder.NewAddFeedBuilder().
 		WithName(feedName).
 		WithURL(feedURL).
 		Build()
 
-	feedID, err := feedService.AddFeed(ctx, feedAddSuccess)
+	feedID, err := feedService.AddFeed(ctxWithUserID, feedAddSuccess)
 
 	is.NoErr(err)
 	is.Equal(feedID, int64(1))
 
-	feedGetFeedSuccess := &rf.Feed{
-		ID:     feedID,
-		UserID: userID,
-	}
-	feed, err := feedService.GetFeed(ctx, feedGetFeedSuccess)
+	feed, err := feedService.GetFeed(ctxWithUserID, feedID)
 
 	is.NoErr(err)                 // should find a feed
 	is.Equal(feed.UserID, userID) // should have the user id used to find it
 	is.Equal(feed.ID, feedID)     // should have the feed id used to find it
 	is.Equal(feed.Name, feedName) // should have feed name that was crated
 
-	feedGetFeedsWith1FeedSuccess := &rf.Feed{
-		UserID: userID,
-	}
-	feeds, err = feedService.GetFeeds(ctx, feedGetFeedsWith1FeedSuccess)
+	feeds, err = feedService.GetFeeds(ctxWithUserID)
 
 	is.NoErr(err)                     // should find feeds
 	is.Equal(len(feeds), 1)           // should find 1 feed
@@ -91,21 +91,14 @@ func TestPostgresDBFeedServiceIntegration(t *testing.T) {
 	is.Equal(feeds[0].URL, feedURL)   // should have feed url
 
 	invalidFeedID := int64(100)
-	feedGetFeedInvalidFeedIDFailure := &rf.Feed{
-		ID:     invalidFeedID,
-		UserID: userID,
-	}
-	feed, err = feedService.GetFeed(ctx, feedGetFeedInvalidFeedIDFailure)
+	feed, err = feedService.GetFeed(ctxWithUserID, invalidFeedID)
 
 	is.NoErr(err)        // should get no error when no feed is found
 	is.True(feed == nil) // should not find feed
 
 	invalidUserID := int64(100)
-	feedGetFeedInvalidUserIDFailure := &rf.Feed{
-		ID:     feedID,
-		UserID: invalidUserID,
-	}
-	feed, err = feedService.GetFeed(ctx, feedGetFeedInvalidUserIDFailure)
+	ctxWithInvalidUserID := rf.SetUserIDToContext(ctx, invalidUserID)
+	feed, err = feedService.GetFeed(ctxWithInvalidUserID, feedID)
 
 	is.NoErr(err)        // should get no error when no feed is found
 	is.True(feed == nil) // should not find feed

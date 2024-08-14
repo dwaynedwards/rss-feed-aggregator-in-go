@@ -42,15 +42,7 @@ type SignUpAuthRequest struct {
 	Name     string `json:"name"`
 }
 
-type SignUpAuthResponse struct {
-	Token string `json:"token"`
-}
-
 type SignInAuthRequest struct {
 	Email    string `json:"email"`
 	Password string `json:"password"`
-}
-
-type SignInAuthResponse struct {
-	Token string `json:"token"`
 }

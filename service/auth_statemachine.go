@@ -4,7 +4,6 @@ import (
 	"context"
 	"time"
 
-	"github.com/alexedwards/argon2id"
 	rf "github.com/dwaynedwards/rss-feed-aggregator-in-go"
 )
 
@@ -94,7 +93,7 @@ func canSignInCheckState(ctx context.Context, args AuthArgs) (AuthArgs, rf.State
 }
 
 func createAuthAndUserState(ctx context.Context, args AuthArgs) (AuthArgs, rf.StateFn[AuthArgs], error) {
-	hashedPassword, err := argon2id.CreateHash(args.auth.BasicAuth.Password, argon2id.DefaultParams)
+	hashedPassword, err := rf.Hash(args.auth.BasicAuth.Password)
 	if err != nil {
 		return args, nil, err
 	}
@@ -110,7 +109,7 @@ func createAuthAndUserState(ctx context.Context, args AuthArgs) (AuthArgs, rf.St
 }
 
 func validateAuthState(ctx context.Context, args AuthArgs) (AuthArgs, rf.StateFn[AuthArgs], error) {
-	match, err := argon2id.ComparePasswordAndHash(args.auth.BasicAuth.Password, args.authToValidate.BasicAuth.Password)
+	match, err := rf.Matches(args.auth.BasicAuth.Password, args.authToValidate.BasicAuth.Password)
 	if err != nil {
 		return args, nil, err
 	}
@@ -123,7 +122,7 @@ func validateAuthState(ctx context.Context, args AuthArgs) (AuthArgs, rf.StateFn
 }
 
 func generateUserTokenState(ctx context.Context, args AuthArgs) (AuthArgs, rf.StateFn[AuthArgs], error) {
-	token, err := rf.GenerateAndSignJWT(args.auth.UserID, time.Now().Add(time.Hour*24))
+	token, err := rf.GenerateAndSignUserIDJWT(args.auth.UserID, time.Now().Add(time.Hour*24))
 	if err != nil {
 		return args, nil, err
 	}

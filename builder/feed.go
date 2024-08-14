@@ -64,3 +64,27 @@ func (b *feedBuilder) WithLastSyncedAt(lastSyncedAt time.Time) *feedBuilder {
 func (b *feedBuilder) Build() *rf.Feed {
 	return b.feed
 }
+
+type addFeedBuilder struct {
+	req *rf.AddFeedRequest
+}
+
+func NewAddFeedBuilder() *addFeedBuilder {
+	return &addFeedBuilder{
+		req: &rf.AddFeedRequest{},
+	}
+}
+
+func (b *addFeedBuilder) WithName(name string) *addFeedBuilder {
+	b.req.Name = name
+	return b
+}
+
+func (b *addFeedBuilder) WithURL(url string) *addFeedBuilder {
+	b.req.URL = url
+	return b
+}
+
+func (b *addFeedBuilder) Build() *rf.AddFeedRequest {
+	return b.req
+}
