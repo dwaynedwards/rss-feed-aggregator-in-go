@@ -10,12 +10,12 @@ import (
 	"github.com/testcontainers/testcontainers-go/wait"
 )
 
-type PostgresTestContainer struct {
+type Postgres struct {
 	DB        *postgresstore.DB
 	container testcontainers.Container
 }
 
-func NewPostgres(ctx context.Context) (*PostgresTestContainer, error) {
+func NewPostgres(ctx context.Context) (*Postgres, error) {
 	container, err := postgres.Run(ctx,
 		"postgres:15.3-alpine",
 		postgres.WithDatabase("test-db"),
@@ -39,13 +39,13 @@ func NewPostgres(ctx context.Context) (*PostgresTestContainer, error) {
 		return nil, err
 	}
 
-	return &PostgresTestContainer{
+	return &Postgres{
 		DB:        db,
 		container: container,
 	}, nil
 }
 
-func (tc *PostgresTestContainer) Cleanup(ctx context.Context) error {
+func (tc *Postgres) Cleanup(ctx context.Context) error {
 	if err := tc.DB.Close(); err != nil {
 		return err
 	}
