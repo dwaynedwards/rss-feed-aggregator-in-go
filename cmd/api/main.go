@@ -8,8 +8,8 @@ import (
 	"os/signal"
 	"syscall"
 
-	rf "github.com/dwaynedwards/rss-feed-aggregator-in-go"
-	"github.com/dwaynedwards/rss-feed-aggregator-in-go/http"
+	rf "github.com/dwaynedwards/rss-feed-aggregator-in-go/internal"
+	"github.com/dwaynedwards/rss-feed-aggregator-in-go/internal/http"
 )
 
 func main() {
@@ -51,7 +51,7 @@ func (m *Main) Run(ctx context.Context) error {
 }
 
 func (m *Main) Close() error {
-	if err := m.APIServer.Open(); err != nil {
+	if err := m.APIServer.Close(); err != nil {
 		return err
 	}
 
