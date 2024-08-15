@@ -48,17 +48,13 @@ func (as AuthArgs) validateSignIn() error {
 		return errors.InternalErrorf("store cannot be nil")
 	}
 
-	if as.auth == nil {
-		return errors.InternalErrorf("auth cannot be nil")
-	}
-
 	errs := map[string]string{}
 
-	if as.auth.BasicAuth == nil || as.auth.BasicAuth.Email == "" {
+	if as.auth == nil || as.auth.BasicAuth == nil || as.auth.BasicAuth.Email == "" {
 		errs["email"] = errors.ErrEmailRequired
 	}
 
-	if as.auth.BasicAuth == nil || as.auth.BasicAuth.Password == "" {
+	if as.auth == nil || as.auth.BasicAuth == nil || as.auth.BasicAuth.Password == "" {
 		errs["password"] = errors.ErrPasswordRequired
 	}
 
